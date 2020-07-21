@@ -254,10 +254,9 @@ def osname():
 def select_file_timeout( timeout=sfTimeOut):
     ''' Uses fdtest.py to browse for file and return its path.
     If the fdtest call takes longer than 'timeout' seconds,
-    the attempt is cancelled and an exception raised.
-    The keyword argument, timeout, sets the number of seconds before time out,
-    and raising an exception.
-    Requires that func_timeout, will try to install if not found.'''
+    the attempt is cancelled and None is returned.
+    The argument, timeout, sets the number of seconds before time out.
+    '''
     
     
     from func_timeout import func_timeout, FunctionTimedOut
@@ -266,13 +265,12 @@ def select_file_timeout( timeout=sfTimeOut):
     
     try:
         filename = func_timeout( timeout, gui_fname, args=()).decode("utf-8")
-    except FunctionTimedOut as e:
+    except FunctionTimedOut:
         outstr = 'select_file cound not complete within '
-        outstr += '{} seconds and was terminated.\n'.format( timeout)
+        outstr += '{} seconds.\n'.format( timeout)
         print( outstr)
-        raise e
-    ## handle other exceptions if needed
-    # except Exception as e:
+        #raise e
+        filename = None
         
     return filename
 
