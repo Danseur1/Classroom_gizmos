@@ -1,4 +1,3 @@
-# CLassroom_gizmos
-Simple functions for use in ipython for introductory physics classes.
+# claccroom_gizmos
 
-    pip install classroom_gizmos
+A collection of functions (and constants) that are useful on the ipython command line in an introductory physics class.
