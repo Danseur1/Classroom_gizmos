@@ -5,7 +5,7 @@ Handy Functions and variables/constants for use at iPython prompt
    '''
 """
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-07-20T16:40:28.910053-04:00 hedfp> ------
+     ------ Time-stamp: <2020-07-21 11:57:31 hedfp> ------
      
 @author: Carl Schmiedekamp
 
@@ -261,7 +261,7 @@ def select_file_timeout( timeout=sfTimeOut):
     
     
     from func_timeout import func_timeout, FunctionTimedOut
-    
+
     from classroom_gizmos.fdtest import gui_fname
     
     try:
