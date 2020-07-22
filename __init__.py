@@ -1,7 +1,8 @@
 ## See https://packaging.python.org/guides/single-sourcing-package-version/
-## ----- Time-stamp: <2020-07-21 17:51:23 hedfp> ------
+## ----- Time-stamp: <2020-07-21 18:39:22 hedfp> ------
 
-__version__ = "0.0b2.dev2", # X.YaN.devM format for now
+__version__ = "0.0b2.dev3", # X.YaN.devM format for now
 
-import astropy
-import func_timeout
+##import astropy
+##import func_timeout
+##import PyQt5
