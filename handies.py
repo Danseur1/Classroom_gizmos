@@ -14,6 +14,10 @@ Created on Sat Feb  1 15:05:51 2020
 2020-04-17 /CS/ adding astropy.units as 'u'
 2020-07-13 /CS/ removing cdpy1d(), and cdWD()
 2020-07-22 /CS/ making astropy and func_timeout optional.
+2020-07-25 /CS/ added timeStampStr()
+                changed from file date/time to timestamp file as mod. time
+                for this module, also added the version from __init__.py.
+                Added variable "__version__" which holds the version.
 """
 
 
@@ -88,10 +92,10 @@ timestamp = getTS( 'timestamp.txt') ##
 date  = timestamp[0:10]
 # print('DBug: date: {} TS:\n{}'.format( date, timestamp))
 
-version=get_version("__init__.py")
+__version__=get_version("__init__.py")
 
 print( "Loading Carl's handies.py ver: {}, updated {}; Python {}".format( 
-    version, date, python_version())) 
+    __version__, date, python_version())) 
 
 def call( cmd):
     import subprocess
@@ -105,7 +109,7 @@ def mine():
 
     '''List the functions and variables defined in handies.py'''
     print('\n handies.py ver: {}, modified {}, python {}'.format(
-        version, date, python_version()))
+        __version__, date, python_version()))
     print('Defining:\n     nowMJD(); mjd2date(), date2mjd(),')
     print('     cdbn(), osname(), hostname(), call(),')
     print('     select_file(), select_file_timeout( timeout={}),'.format( sfTimeOut))

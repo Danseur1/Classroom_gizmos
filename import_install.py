@@ -40,6 +40,11 @@ PipSpecialCases[ 'pymc3'] = 'conda install --yes -c conda-forge pymc3'
 # pymc3 may require install of VC runtime:
 #    https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
 
+CondaSpecialCases = {}
+CondaSpecialCases[ 'vpython'] = 'conda install --yes -c vpython vpython'
+
+
+
 ## PipInstallDict not currently used
 PipInstallDict = { }
 PipInstallDict[ 'pip'] = 'python -m pip install -U pip'
@@ -180,18 +185,22 @@ def importInstall( pkgname, installname=None):
         pythonExe, condaPrefix = locatePythonPrefix() ## get python executable, and conda prefix
 
     ## first check if package is known special case
-        if installfromname in PipSpecialCases:
+        if hasConda() and installfromname in CondaSpecialCases:
+            ck = runCatch(  CondaSpecialCases[ installfromname])
+            
+        elif installfromname in PipSpecialCases:
             ck = runCatch( PipSpecialCases[ installfromname])
-            if verboseInstall:
-                print( 'runCatch returned {}'.format( ck))
-            if ck:
-                try:
-                    pkg = __import__( pkgname)
-                    if verboseInstall:
-                        print( ' {} imported.'.format( pkgname))
-                        return pkg
-                except Exception:
-                    None
+        else:
+            ck = False
+            
+        if ck:
+            try:
+                pkg = __import__( pkgname)
+                if verboseInstall:
+                    print( ' {} imported.'.format( pkgname))
+                    return pkg
+            except Exception:
+                None
             ## if special install fails, try other ways.
 
 	## try installing from conda repository if conda is available
@@ -259,6 +268,11 @@ if __name__ == "__main__":
     np = importInstall( 'numpy')
     matplotlib = importInstall( 'matplotlib')
     import matplotlib.pyplot as plt
+    
+    vpython = importInstall( 'vpython')
+    from vpython import *
+    ball = sphere()
+    
     if fullInstallList: ## try a lot of packages
         ndt = importInstall( 'numdifftools')
     
