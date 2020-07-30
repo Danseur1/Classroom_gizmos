@@ -2,7 +2,7 @@
 '''
 Handy Functions and variables/constants for use at iPython prompt
    call mine() for full list of functions and variables.
-   '''
+'''
 """
 Created on Sat Feb  1 15:05:51 2020
      ------ Time-stamp: <2020-07-29 13:50:12 cws2> ------
@@ -19,7 +19,7 @@ Created on Sat Feb  1 15:05:51 2020
                 for this module, also added the version from __init__.py.
                 Added variable "__version__" which holds the version.
 2020-07-29 /CS/ added isInstalled()
-
+"""
 
 
 ## Shortcuts etc. functions.
@@ -356,7 +356,7 @@ except ImportError:
 
 
 def isInstalled( pkgname):
-    ''' Imports "pkgname" and returns package if installed.
+    ''' Imports pkgname and returns package if installed.
         If not installed, returns None.
         Typical Usage:
             astropy = isInstalled( 'astropy') 
