@@ -36,12 +36,15 @@ PipSpecialCases[ 'saba'] = ['conda install --yes -c sherpa sherpa', 'pip install
 PipSpecialCases[ 'func_timeout'] = ['pip install func-timeout']
 
 PipSpecialCases[ 'pscTest'] = [ 'echo This is a test.', 'echo test', 'echo test.']
-PipSpecialCases[ 'pymc3'] = 'conda install --yes -c conda-forge pymc3'
+PipSpecialCases[ 'vpython'] = 'pip install vpython'
 # pymc3 may require install of VC runtime:
 #    https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
 
 CondaSpecialCases = {}
-CondaSpecialCases[ 'vpython'] = 'conda install --yes -c vpython vpython'
+CondaSpecialCases[ 'pymc3'] = 'conda install --yes -c conda-forge pymc3'
+
+## CondaSpecialCases[ 'vpython'] = 'conda install --yes -c vpython vpython'
+## in illumidesk, installs with pip but not conda.
 
 
 
@@ -271,7 +274,7 @@ if __name__ == "__main__":
     
     vpython = importInstall( 'vpython')
     from vpython import *
-    ball = sphere()
+    ball = sphere( color=color.blue)
     
     if fullInstallList: ## try a lot of packages
         ndt = importInstall( 'numdifftools')

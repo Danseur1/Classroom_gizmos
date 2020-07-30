@@ -5,7 +5,7 @@ Handy Functions and variables/constants for use at iPython prompt
    '''
 """
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-07-21 11:57:31 hedfp> ------
+     ------ Time-stamp: <2020-07-29 13:50:12 cws2> ------
      
 @author: Carl Schmiedekamp
 
@@ -18,7 +18,7 @@ Created on Sat Feb  1 15:05:51 2020
                 changed from file date/time to timestamp file as mod. time
                 for this module, also added the version from __init__.py.
                 Added variable "__version__" which holds the version.
-"""
+2020-07-29 /CS/ added isInstalled()
 
 
 
@@ -120,6 +120,7 @@ def mine():
     print('     greek  ➞ a string with greek alphabet.')
     print('     pltsize( w, h) ➞ resizes plots in matplotlib, units are inches')
     print('     timeStampStr() ➞ returns a readable timestamp string.')
+    print('     isInstalled( pkgNameStr) ➞ returns package or None if not installed.')
     print('     mine() ➞ lists what handies.py defines.')
 
     print('From math imports:\n     pi, sqrt, degrees, radians,\n     cos, sin, tan, atan2, asin, acos, atan, and\n' + 
@@ -352,6 +353,24 @@ try:
         return filename
 except ImportError:
     print( 'select_file functions not defined because PyQt5 is not available.')
+
+
+def isInstalled( pkgname):
+    ''' Imports "pkgname" and returns package if installed.
+        If not installed, returns None.
+        Typical Usage:
+            astropy = isInstalled( 'astropy') 
+            if astropy == None:
+                ... 
+            else:
+                from astropy import units as u
+        '''
+    try:
+        pkg = __import__( pkgname)
+        return pkg
+    except Exception:
+    	return None
+
 
 if __name__ == "__main__":
     mine()
