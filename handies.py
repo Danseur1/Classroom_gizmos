@@ -5,7 +5,7 @@ Handy Functions and variables/constants for use at iPython prompt
 '''
 """
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-07-29 13:50:12 cws2> ------
+     ------ Time-stamp: <2020-08-02T14:17:06.115962-04:00 hedfp> ------
      
 @author: Carl Schmiedekamp
 

@@ -4,7 +4,7 @@
 Created on Fri May 15 15:53:29 2020
 
 @author: cws2
-@Time-stamp: <2020-07-20T16:41:09.952841-04:00 hedfp>
+@Time-stamp: <2020-08-02T14:17:34.284536-04:00 hedfp>
 
 
 importInstall - tests import of package and if that fails, tries to install
