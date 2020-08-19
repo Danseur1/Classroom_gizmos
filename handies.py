@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Handy Functions and variables/constants for use at iPython prompt
    call mine() for full list of functions and variables.
-'''
-"""
+
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-08-02T14:17:06.115962-04:00 hedfp> ------
+     ------ Time-stamp: <2020-08-19T16:05:00.537624-04:00 cws2> ------
      
 @author: Carl Schmiedekamp
 
@@ -19,6 +18,7 @@ Created on Sat Feb  1 15:05:51 2020
                 for this module, also added the version from __init__.py.
                 Added variable "__version__" which holds the version.
 2020-07-29 /CS/ added isInstalled()
+2020-08-13 /CS/ added condaEnvName() as a helper function.
 """
 
 
@@ -28,6 +28,21 @@ import codecs
 from math import pi, sqrt, cos, sin, tan
 from math import acos, asin, atan, atan2, degrees, radians
 from math import log, log10, exp
+
+from random import randint
+
+def randomLetter():
+    '''
+    Generate a single random uppercase ASCII letter
+
+    Returns
+    -------
+    TYPE
+        char.
+    '''
+    import random
+    import string    
+    return random.choice(string.ascii_uppercase)
 
 def timeStampStr():
     '''Returns a string with the current time in ISO format.'''
@@ -53,7 +68,7 @@ else:
     comb = nCr    
 
 from platform import python_version
-import sys, os.path, time
+import sys, os.path, time, os
 
 
 def hostname():
@@ -87,15 +102,25 @@ def get_version(rel_path):
             return line.split(delim)[1]
     else:
         raise RuntimeError("Unable to find version string.")
-    
+   
+######  'Welcome Message' on loading  ######
+
+def condaEnvName():
+    '''Gets environment name from python's path.
+    Ref:
+        https://stackoverflow.com/questions/36539623/how-do-i-find-the-name-of-the-conda-environment-in-which-my-code-is-running'''
+
+    # return Path(sys.executable).as_posix().split('/')[-3]
+    return sys.exec_prefix.split(os.sep)[-1]
+
 timestamp = getTS( 'timestamp.txt') ##
 date  = timestamp[0:10]
 # print('DBug: date: {} TS:\n{}'.format( date, timestamp))
 
 __version__=get_version("__init__.py")
 
-print( "Loading Carl's handies.py ver: {}, updated {}; Python {}".format( 
-    __version__, date, python_version())) 
+print( "Loading Carl's handies.py ver: {} {}; Python:{}; ENV:{}".format( 
+    __version__, date, python_version(), condaEnvName())) 
 
 def call( cmd):
     import subprocess
@@ -105,14 +130,34 @@ def call( cmd):
     True of False to indicate success or failure.'''
     subprocess.call( cmd, shell=True)
 
+def isInstalled( pkgname):
+    ''' Imports pkgname and returns package if installed.
+        If not installed, returns None.
+        Typical Usage:
+            astropy = isInstalled( 'astropy') 
+            if astropy == None:
+                ... 
+            else:
+                from astropy import units as u
+        '''
+    try:
+        pkg = __import__( pkgname)
+        return pkg
+    except Exception:
+    	return None
+
+
 def mine():
 
     '''List the functions and variables defined in handies.py'''
     print('\n handies.py ver: {}, modified {}, python {}'.format(
         __version__, date, python_version()))
-    print('Defining:\n     nowMJD(); mjd2date(), date2mjd(),')
+    if isInstalled( 'astropy'):
+        print('Defining:\n     nowMJD(); mjd2date(), date2mjd(),')
+        print('     astropy.units as "u", i.e. u.cm or u.GHz')
     print('     cdbn(), osname(), hostname(), call(),')
-    print('     select_file(), select_file_timeout( timeout={}),'.format( sfTimeOut))
+    if isInstalled( 'PyQt5'):
+        print('     select_file(), select_file_timeout( timeout={}),'.format( sfTimeOut))
     print('     rad(), deg(), sinD(), cosD(), tanD(), asinD(),\n     acosD(), atanD(), atan2D(), atan2P()')
     print("       'D' and 'P' functions work with degrees.")
     print("       'P' inverse functions return only positive angles.")
@@ -121,12 +166,15 @@ def mine():
     print('     pltsize( w, h) ➞ resizes plots in matplotlib, units are inches')
     print('     timeStampStr() ➞ returns a readable timestamp string.')
     print('     isInstalled( pkgNameStr) ➞ returns package or None if not installed.')
-    print('     mine() ➞ lists what handies.py defines.')
+    print('     randomLetter() ➞ a random uppercase ASCII letter.')
 
+    print('From random imports randint( min, max)')
+    
     print('From math imports:\n     pi, sqrt, degrees, radians,\n     cos, sin, tan, atan2, asin, acos, atan, and\n' + 
       '     log, log10, exp')
 
-    print( 'From astropy units as "u", i.e. u.cm or u.GHz')
+    print( '\n     mine() ➞ lists what handies.py defines.')
+
     print( '\nIf astropy package is not available, "u" and the mjd functions are not defined.')
     print( 'If PyQt5 package is not available, the select_file functions are not defined.')
     print( 'If func_timeout package is not availabe, the select_file_timeout ignores the'+\
@@ -355,21 +403,21 @@ except ImportError:
     print( 'select_file functions not defined because PyQt5 is not available.')
 
 
-def isInstalled( pkgname):
-    ''' Imports pkgname and returns package if installed.
-        If not installed, returns None.
-        Typical Usage:
-            astropy = isInstalled( 'astropy') 
-            if astropy == None:
-                ... 
-            else:
-                from astropy import units as u
-        '''
-    try:
-        pkg = __import__( pkgname)
-        return pkg
-    except Exception:
-    	return None
+if __name__ == "__main__":
+    mine()
+    
+    
+    
+medOut:
+            outstr = 'select_file cound not complete within '
+            outstr += '{} seconds.\n'.format( timeout)
+            print( outstr)
+            #raise e
+            filename = None
+            
+        return filename
+except ImportError:
+    print( 'select_file functions not defined because PyQt5 is not available.')
 
 
 if __name__ == "__main__":

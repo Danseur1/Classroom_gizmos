@@ -4,7 +4,7 @@
 Created on Fri May 15 15:53:29 2020
 
 @author: cws2
-@Time-stamp: <2020-08-02T14:17:34.284536-04:00 hedfp>
+@Time-stamp: <2020-08-19T16:05:58.744893-04:00 cws2>
 
 
 importInstall - tests import of package and if that fails, tries to install
@@ -37,11 +37,18 @@ PipSpecialCases[ 'func_timeout'] = ['pip install func-timeout']
 
 PipSpecialCases[ 'pscTest'] = [ 'echo This is a test.', 'echo test', 'echo test.']
 PipSpecialCases[ 'vpython'] = 'pip install vpython'
+PipSpecialCases[ 'ipyvolume'] = ['pip install ipyvolume', 
+                               'jupyter nbextension enable --py --sys-prefix ipyvolume',
+                               'jupyter nbextension enable --py --sys-prefix widgetsnbextension']
+
 # pymc3 may require install of VC runtime:
 #    https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
 
 CondaSpecialCases = {}
 CondaSpecialCases[ 'pymc3'] = 'conda install --yes -c conda-forge pymc3'
+CondaSpecialCases[ 'ipyvolume'] = 'conda install --yes -c conda-forge ipyvolume'
+CondaSpecialCases[ 'wordcloud'] = 'conda install --yes -c conda-forge wordcloud'
+
 
 ## CondaSpecialCases[ 'vpython'] = 'conda install --yes -c vpython vpython'
 ## in illumidesk, installs with pip but not conda.
@@ -298,6 +305,14 @@ if __name__ == "__main__":
     
         saba = importInstall( 'saba')
         
+        oops1 = importInstall( 'pscTest')
+        oops2 = importInstall( 'fredricka')
+        print( '\n\nsaba: {}; oops1: {}; oops2: {}'.format( saba, oops1, oops2))
+    else:
+        oops2 = importInstall( 'fredricka')
+        print( 'Trying fredricka: ImportInstall returned {}'.format( oops2))
+ 
+      
         oops1 = importInstall( 'pscTest')
         oops2 = importInstall( 'fredricka')
         print( '\n\nsaba: {}; oops1: {}; oops2: {}'.format( saba, oops1, oops2))
