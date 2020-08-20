@@ -408,20 +408,3 @@ if __name__ == "__main__":
     
     
     
-medOut:
-            outstr = 'select_file cound not complete within '
-            outstr += '{} seconds.\n'.format( timeout)
-            print( outstr)
-            #raise e
-            filename = None
-            
-        return filename
-except ImportError:
-    print( 'select_file functions not defined because PyQt5 is not available.')
-
-
-if __name__ == "__main__":
-    mine()
-    
-    
-    

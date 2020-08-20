@@ -1,5 +1,5 @@
 ## See https://packaging.python.org/guides/single-sourcing-package-version/
-## ----- Time-stamp: <2020-07-27 22:11:46 hedfp> ------
+## ----- Time-stamp: <2020-08-19T18:31:54.501723-04:00 cws2> ------
 
-__version__ = "0.0b2.dev10", # X.YaN.devM format for now
+__version__ = "0.0b2.dev11", # X.YaN.devM format for now
 
