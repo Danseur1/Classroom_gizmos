@@ -1,6 +1,6 @@
 ''' calc minutes before for BestBuy, In-class, etc. questions
 returns a string that is the perl code fragment for specific cases.xs'''
-## ----- Time-stamp: <2020-08-19T16:06:27.454447-04:00 cws2> -----
+## ----- Time-stamp: <2020-08-22T10:47:01.348406-04:00 cws2> -----
 
  
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -29,6 +29,22 @@ hr = 3600  ## 1 hour is 3660 s
 day = 86400 ## 1 day is 87840 s
 week = 604800 ## 1 week is 604880 s
 
+def BB():
+    print( '\nFunctions in BestByMinBefore:\n')
+    print( 'decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSubs=10,')
+    print( '          minCreditFraction=minCreditF, assignmentDue=duedates[ "PHYS250.001"]):')
+    print()
+    print( 'BBPdecCredit( decStart, hoursToMinimum=7*24)')
+    print()
+    print( 'InCdecCredit( decStart, hoursToMinimum=24)')
+    print()
+    print( 'HWdecCredit( )')
+    print( '\n Helpers:')
+    print( 'localTimeToGMTepoch( localTime)')
+    print()
+    print( 'minBeforeToLocal( minBefore, assignmentDue=duedates[ "PHYS250.001"])')
+    
+    
 
 def localTimeToGMTepoch( localTime):
     '''
@@ -36,17 +52,23 @@ def localTimeToGMTepoch( localTime):
 
     Parameters
     ----------
-    localTime : a date string in format "%Y-%m-%d %H:%M:%S"
-        a local (Eastern time) time
+    localTime : a date string in format "%Y-%m-%d %H:%M" or "%Y-%m-%d %H:%M:%S"
+            ( yyyy-mm-dd hh:mm  or yyyy-mm-dd hh:mm:ss  )
+        for a local (Eastern time) time
 
     Returns
     -------
     GMT epoch of that time
     '''
     
-    formatin = "%Y-%m-%d %H:%M:%S"
-    
-    tuple = time.strptime( localTime, formatin)
+    try:
+        tuple = time.strptime( localTime, "%Y-%m-%d %H:%M")
+    except ValueError:
+        try:
+            tuple = time.strptime( localTime, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            raise
+            
     # print( 'DBug: tuple: {}'.format( tuple))
     
     epochFromLocal = time.mktime( tuple)  ## seconds since 1970-01-01 00:00:00 GMT
@@ -55,6 +77,24 @@ def localTimeToGMTepoch( localTime):
 
     return epochFromLocal
 
+def minBeforeToLocal( minBefore, assignmentDue=duedates[ 'PHYS250.001']):
+    '''
+    Convert minutes before assignment is due to a date.
+
+    Parameters
+    ----------
+    minBefore : integer
+        minutes before the assignment is due.
+    assignmentDue : string
+        date/time string when assignment is due.
+    Returns
+    -------
+    date/time string for minBefore minutes before assignmentDue
+
+    '''
+    beforeDueEpoch = localTimeToGMTepoch( assignmentDue) - minBefore*60  ## in seconds
+    
+    return time.asctime( time.localtime( beforeDueEpoch))
 
 
 def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSubs=10,
@@ -161,6 +201,15 @@ def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSu
         outPerl = "&cs9(-&beforeDue('minutes'),{},{},{})".format(
             -decMinutes, -endMinutes, timeMult)
         
+        print( '\nAssignment is Due        ',
+              minBeforeToLocal( 00, assignmentDue))
+        print( 'Decrease start specified:', decStart, ' decrease time:',
+              hoursToMinimum, ' h', ', ', hoursToMinimum/24, ' d')
+        print( 'Decreasing credit starts ',
+              minBeforeToLocal( decMinutes, assignmentDue))
+        print( 'Decreasing credit ends   ',
+              minBeforeToLocal( endMinutes, assignmentDue))
+        
         ## add '*' if there is a submissions decrease part or finish line.
         if fullCreditSubs>0:
             outPerl = outPerl + '*\n'
@@ -171,8 +220,9 @@ def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSu
     if not fullCreditSubs<=0:
         outPerl = outPerl + '&cs9($RESPONSE_NUM,{},{},{})*$POINTS</eqn>'.format(
                 fullCreditSubs, minCreditSubs, subsMult)
-    
-    return outPerl
+    print( '\n++++++++++++++')
+    print( outPerl)
+    # return outPerl
 
 
 def BBPdecCredit( decStart, hoursToMinimum=7*24):
@@ -198,7 +248,7 @@ def BBPdecCredit( decStart, hoursToMinimum=7*24):
     perl string to calculate the points, decreasing with time and with submissions
 
     '''
-    return decCredit( decStart, hoursToMinimum, fullCreditSubs=5, minCreditSubs=10,
+    decCredit( decStart, hoursToMinimum, fullCreditSubs=5, minCreditSubs=10,
               minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'])
 
 def InCdecCredit( decStart, hoursToMinimum=24):
@@ -225,7 +275,7 @@ def InCdecCredit( decStart, hoursToMinimum=24):
 
     '''
 
-    return decCredit( decStart, hoursToMinimum, fullCreditSubs=0, minCreditSubs=10,
+    decCredit( decStart, hoursToMinimum, fullCreditSubs=0, minCreditSubs=10,
               minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'])
 
 
@@ -245,16 +295,29 @@ def HWdecCredit( ):
     perl string to calculate the points, decreasing with time only.
     '''
 
-    return decCredit( '')
+    decCredit( '')
 
-CreditSubs=10,
-              minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'])
+if __name__=="__main__":
+    print( '\nTesting BestByMinBefore.py\n')
     
-
-    Returns
-    -------
-    perl string to calculate the points, decreasing with time only.
-    '''
-
-    return decCredit( '')
-
+    decStart = '2020-09-01 23:59'
+    print( 'decStart:', decStart)
+    
+    print( '\ndecCredit:')
+    decCredit( decStart)
+    
+    print( '\nHW:')
+    HWdecCredit()
+    
+    print( '\nInCdecCredit:')
+    InCdecCredit( decStart)
+    
+    print( '\nBBPdecCredit:')
+    BBPdecCredit( decStart)
+    
+    
+    
+    # test1 = decCredit( '2020-08-21 23:58:00')
+    # assert test1=="&cs9(-&beforeDue('minutes'),-169867,-159787,0.447)*\n&cs9($RESPONSE_NUM,5,10,0.447)*$POINTS</eqn>"
+    
+    
