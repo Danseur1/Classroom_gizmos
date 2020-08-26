@@ -1,6 +1,6 @@
 ''' calc minutes before for BestBuy, In-class, etc. questions
 returns a string that is the perl code fragment for specific cases.xs'''
-## ----- Time-stamp: <2020-08-22T10:47:01.348406-04:00 cws2> -----
+## ----- Time-stamp: <2020-08-22T11:58:18.724818-04:00 cws2> -----
 
  
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -32,7 +32,8 @@ week = 604800 ## 1 week is 604880 s
 def BB():
     print( '\nFunctions in BestByMinBefore:\n')
     print( 'decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSubs=10,')
-    print( '          minCreditFraction=minCreditF, assignmentDue=duedates[ "PHYS250.001"]):')
+    print( '          minCreditFraction=minCreditF, assignmentDue=duedates[ "PHYS250.001"]),')
+    print( '          nudge=1.9')
     print()
     print( 'BBPdecCredit( decStart, hoursToMinimum=7*24)')
     print()
@@ -98,7 +99,7 @@ def minBeforeToLocal( minBefore, assignmentDue=duedates[ 'PHYS250.001']):
 
 
 def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSubs=10,
-              minCreditFraction=minCreditF, assignmentDue=duedates[ 'PHYS250.001']):
+              minCreditFraction=minCreditF, assignmentDue=duedates[ 'PHYS250.001'], nudge=nudge):
     '''
     General decreasing credit perl string generator.
 
@@ -131,6 +132,8 @@ def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSu
     assignmentDue: (a date string in format "%Y-%m-%d %H:%M:%S")
         due date/time for WebAssign assignment. This is the time that
         minute differences are calculated from.
+    nudge: (in hours) the time to add to the decStart to allow for differences in
+        time zones or computer clocks.
 
     Returns
     -------
@@ -201,10 +204,10 @@ def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSu
         outPerl = "&cs9(-&beforeDue('minutes'),{},{},{})".format(
             -decMinutes, -endMinutes, timeMult)
         
-        print( '\nAssignment is Due        ',
-              minBeforeToLocal( 00, assignmentDue))
-        print( 'Decrease start specified:', decStart, ' decrease time:',
-              hoursToMinimum, ' h', ', ', hoursToMinimum/24, ' d')
+        print( '\nAssignment is Due         {}, nudge is {} h.'.format(
+              minBeforeToLocal( 00, assignmentDue), nudge))
+        print( 'Decreasing start specified: {} Decrease time: {} h or {:0.2f} d'.format(
+               decStart, hoursToMinimum, hoursToMinimum/24))
         print( 'Decreasing credit starts ',
               minBeforeToLocal( decMinutes, assignmentDue))
         print( 'Decreasing credit ends   ',
@@ -232,7 +235,7 @@ def BBPdecCredit( decStart, hoursToMinimum=7*24):
 
     Convenience function that is equivalent to
       decCredit( decStart, hoursToMinimum, fullCreditSubs=5, minCreditSubs=10,
-              minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'])
+              minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'], nudge)
         
 
     Parameters
@@ -258,7 +261,7 @@ def InCdecCredit( decStart, hoursToMinimum=24):
     
     Convenience function that is equivalent to
       decCredit( decStart, hoursToMinimum, fullCreditSubs=0, minCreditSubs=10,
-              minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'])
+              minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'], nudge)
 
 
     Parameters
@@ -287,7 +290,7 @@ def HWdecCredit( ):
     
     Convenience function that is equivalent to
       decCredit( decStart, hoursToMinimum, fullCreditSubs=0, minCreditSubs=10,
-              minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'])
+              minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'], nudge)
     
 
     Returns

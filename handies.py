@@ -4,7 +4,7 @@ Handy Functions and variables/constants for use at iPython prompt
    call mine() for full list of functions and variables.
 
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-08-19T16:05:00.537624-04:00 cws2> ------
+     ------ Time-stamp: <2020-08-25T16:08:36.918321-04:00 cws2> ------
      
 @author: Carl Schmiedekamp
 
@@ -19,6 +19,9 @@ Created on Sat Feb  1 15:05:51 2020
                 Added variable "__version__" which holds the version.
 2020-07-29 /CS/ added isInstalled()
 2020-08-13 /CS/ added condaEnvName() as a helper function.
+2020-08-25 /CS/ added 'line magic' cls to fill screen with 23 blank lines.
+                the 'Loading' message is not output if not in interpreter,
+                i.e. if IsInteractive flag is False.
 """
 
 
@@ -102,7 +105,36 @@ def get_version(rel_path):
             return line.split(delim)[1]
     else:
         raise RuntimeError("Unable to find version string.")
-   
+
+
+## set IsInteractive flag and define cls as line magic
+IsInteractive = False
+try:
+    from IPython.core.magic import (register_line_magic, register_cell_magic,
+                                register_line_cell_magic)
+    ## Ref: https://stackoverflow.com/questions/2356399/tell-if-python-is-in-interactive-mode
+    ## Ref: https://ipython.readthedocs.io/en/stable/config/custommagics.html
+    
+    try:
+        if sys.ps1: IsInteractive = True
+        
+    except AttributeError:
+        interpreter = False
+        if sys.flags.interactive: IsInteractive = True
+
+    if IsInteractive:
+        @register_line_magic 
+        def cls(line): 
+            '''Defines a 'clear screen' line magic'''
+            print( 23*'\n') 
+            return 
+except ( ModuleNotFoundError, ImportError):
+    IsInteractive = False
+else:
+    del cls ## must delete function to make magic visible.
+
+    
+
 ######  'Welcome Message' on loading  ######
 
 def condaEnvName():
@@ -119,8 +151,9 @@ date  = timestamp[0:10]
 
 __version__=get_version("__init__.py")
 
-print( "Loading Carl's handies.py ver: {} {}; Python:{}; ENV:{}".format( 
-    __version__, date, python_version(), condaEnvName())) 
+if IsInteractive:
+    print( "Loading Carl's handies.py ver: {} {}; Python:{}; ENV:{}".format( 
+        __version__, date, python_version(), condaEnvName())) 
 
 def call( cmd):
     import subprocess
@@ -270,6 +303,7 @@ def cdbn( dirname, sub=None):
         else:
             print('[{}] --> {} : No access!'.format( dirname, dir))
             return False
+
 
 # def cdpy1d():
 #     '''cd to Pythonista dir. in OneDrive'''
