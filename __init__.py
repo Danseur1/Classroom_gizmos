@@ -1,7 +1,7 @@
 ## See https://packaging.python.org/guides/single-sourcing-package-version/
-## ----- Time-stamp: <2020-08-22T11:58:18.724818-04:00 cws2> ------
+## ----- Time-stamp: <2020-08-26 19:18:21 cws2> ------
 
 '''A collection of functions for ipython use in the classroom'''
 
-__version__ = "0.0b2.dev13" # X.YaN.devM format for now
+__version__ = "0.0b2.dev14" # X.YaN.devM format for now
 

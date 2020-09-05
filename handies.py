@@ -4,7 +4,7 @@ Handy Functions and variables/constants for use at iPython prompt
    call mine() for full list of functions and variables.
 
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-08-25T16:08:36.918321-04:00 cws2> ------
+     ------ Time-stamp: <2020-09-01T13:58:54.955110-04:00 cws2> ------
      
 @author: Carl Schmiedekamp
 
@@ -22,6 +22,9 @@ Created on Sat Feb  1 15:05:51 2020
 2020-08-25 /CS/ added 'line magic' cls to fill screen with 23 blank lines.
                 the 'Loading' message is not output if not in interpreter,
                 i.e. if IsInteractive flag is False.
+2020-09-02 /CS/ Now sets ipython number precision to 5 digits.
+                  (Note: only for expression evaluation output.)
+
 """
 
 
@@ -46,6 +49,15 @@ def randomLetter():
     import random
     import string    
     return random.choice(string.ascii_uppercase)
+
+def randomElement( List=(1,2,3,4,5,6,7, 'oops')):
+    '''
+    return random element of list
+
+    '''
+    index = randint(0, len( List))
+    return List[ index]
+
 
 def timeStampStr():
     '''Returns a string with the current time in ISO format.'''
@@ -116,18 +128,28 @@ try:
     ## Ref: https://ipython.readthedocs.io/en/stable/config/custommagics.html
     
     try:
-        if sys.ps1: IsInteractive = True
+        if sys.ps1:
+            IsInteractive = True
         
     except AttributeError:
         interpreter = False
         if sys.flags.interactive: IsInteractive = True
-
+        
+        
     if IsInteractive:
+        ### set default float precision
+        ### Ref: https://stackoverflow.com/questions/10361206/how-to-run-an-ipython-magic-from-a-script-or-timing-a-python-script
+        from IPython import get_ipython
+        ipython = get_ipython()
+        ipython.magic( 'precision "%0.5g"')
+        
+        ### define clear screen magic (%cls generates 23 blank lines)
         @register_line_magic 
         def cls(line): 
             '''Defines a 'clear screen' line magic'''
             print( 23*'\n') 
-            return 
+            return
+            
 except ( ModuleNotFoundError, ImportError):
     IsInteractive = False
 else:
@@ -160,11 +182,13 @@ def call( cmd):
     '''Modeled after call function in NANOGrav Sprinng 2020 workshop.
     call() just executes the command in the shell and displays output,
     while runCatch( cmd) tries to catch all errors and output and only returns
-    True of False to indicate success or failure.'''
+    True or False to indicate success or failure.
+    Could have security issues. See subprocess documentation.'''
     subprocess.call( cmd, shell=True)
 
 def isInstalled( pkgname):
     ''' Imports pkgname and returns package if installed.
+        pkgname is a string with name of package as used in import stmt.
         If not installed, returns None.
         Typical Usage:
             astropy = isInstalled( 'astropy') 
@@ -195,11 +219,12 @@ def mine():
     print("       'D' and 'P' functions work with degrees.")
     print("       'P' inverse functions return only positive angles.")
     print("Defines nCr AKA comb or imports from math if available.")
-    print('     greek  ➞ a string with greek alphabet.')
+    print('     greeks  ➞ a string with greek alphabet.')
     print('     pltsize( w, h) ➞ resizes plots in matplotlib, units are inches')
     print('     timeStampStr() ➞ returns a readable timestamp string.')
     print('     isInstalled( pkgNameStr) ➞ returns package or None if not installed.')
     print('     randomLetter() ➞ a random uppercase ASCII letter.')
+    print('     randomElement( List) ➞ returns random element from list.')
 
     print('From random imports randint( min, max)')
     
@@ -266,7 +291,7 @@ def atan2P( y, x):
 rad = radians  ## alias the conversion functions
 deg = degrees
 
-greek = ' Α Β Γ Δ Ε Ζ Η Θ Ι Κ Λ Μ Ν Ξ Ο Π Ρ Σ Τ Υ Φ Χ Ψ Ω  α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω '
+greeks = ' Α Β Γ Δ Ε Ζ Η Θ Ι Κ Λ Μ Ν Ξ Ο Π Ρ Σ Τ Υ Φ Χ Ψ Ω  α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω '
 
 def cdbn( dirname, sub=None):
     '''cd to directory (or subdirectory) who's path is in Env.Var. who's name is passed as

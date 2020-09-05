@@ -210,8 +210,9 @@ def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSu
                decStart, hoursToMinimum, hoursToMinimum/24))
         print( 'Decreasing credit starts ',
               minBeforeToLocal( decMinutes, assignmentDue))
-        print( 'Decreasing credit ends   ',
-              minBeforeToLocal( endMinutes, assignmentDue))
+        print( 'Decreasing credit ends {}, to {}% credit, {}% dec. with subs.'.format(
+              minBeforeToLocal( endMinutes, assignmentDue),
+              timeMult*100, subsMult*100))
         
         ## add '*' if there is a submissions decrease part or finish line.
         if fullCreditSubs>0:
@@ -279,7 +280,7 @@ def InCdecCredit( decStart, hoursToMinimum=24):
     '''
 
     decCredit( decStart, hoursToMinimum, fullCreditSubs=0, minCreditSubs=10,
-              minCreditFraction=0.2, assignmentDue=duedates[ 'PHYS250.001'])
+              minCreditFraction=0.4, assignmentDue=duedates[ 'PHYS250.001'])
 
 
 def HWdecCredit( ):
