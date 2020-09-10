@@ -141,7 +141,7 @@ try:
         ### Ref: https://stackoverflow.com/questions/10361206/how-to-run-an-ipython-magic-from-a-script-or-timing-a-python-script
         from IPython import get_ipython
         ipython = get_ipython()
-        ipython.magic( 'precision "%0.5g"')
+        ipython.magic( 'precision %0.5g')
         
         ### define clear screen magic (%cls generates 23 blank lines)
         @register_line_magic 

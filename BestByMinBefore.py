@@ -1,6 +1,6 @@
 ''' calc minutes before for BestBuy, In-class, etc. questions
 returns a string that is the perl code fragment for specific cases.xs'''
-## ----- Time-stamp: <2020-08-22T11:58:18.724818-04:00 cws2> -----
+## ----- Time-stamp: <2020-09-10T17:17:07.297722-04:00 cws2> -----
 
  
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -300,6 +300,168 @@ def HWdecCredit( ):
     '''
 
     decCredit( '')
+
+def is_number(s):
+    '''
+    
+
+    Parameters
+    ----------
+    s : string
+        string to check if it can be converted to a number.
+
+    Returns
+    -------
+    bool
+        Returns True if string can be converted to a number.
+    Ref: https://stackoverflow.com/questions/354038/how-do-i-check-if-a-string-is-a-number-float
+    '''
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+def is_datetime(s):
+    '''
+    Test if string is valid date-time string.
+    Parameters
+    ----------
+    s : string
+    Returns
+    -------
+    Boolean
+    '''
+    try:
+        ck = localTimeToGMTepoch( s) 
+        return True
+    except :
+        return False
+
+
+def getCode():
+    '''
+    Prompts for arguments to decCredit() and then calls it
+    to get Perl code for the conditional credit field in WebAssign.
+
+    Returns
+    -------
+    outputs perl code.
+
+    '''
+    due = duedates[ "PHYS250.001"]
+    fulldue = ""
+    fullsubs = 5
+    minsubs = 10
+    tfrac = 0.2
+    hours = 12
+    
+    prompt = 'If credit does not decrease with time, press <return>, or' +\
+        '\nif it decreases with time enter the date-time the decrease starts' +\
+            '\n formatted like {}:'.format( due)
+    response = input( prompt).strip()
+    
+    if response == "":
+        pass
+    elif is_datetime( response):
+        fulldue = response
+    else:
+        print( '{} is not in proper Date Time format.'.format( response))
+        return
+
+    
+    if not fulldue == "":
+        ## ck if due date is default
+        prompt = 'Press <return> key if {} is the due date of the assignment,' +\
+                 ' according to WebAssign.'
+        prompt = prompt + '\n or enter the due date in same format: '
+        response = input( prompt.format( duedates[ "PHYS250.001"])).strip()
+    
+        if response == "":
+            pass
+        elif is_datetime( response):
+            due = localTimeToGMTepoch( response) 
+        else:
+            print( '{} is not in proper Date Time format.'.format( response))
+            return
+        print( 'DBug due: {}'.format( due))
+    
+        
+    
+
+    prompt = 'Press <return> key if {} is the number of submissions' 
+    prompt = prompt + ' that receive full credit, \n or enter number of submissions'
+    prompt = prompt + 'that receive full credit,\n or zero if all submissions receive full credit: '      
+    response = input( prompt.format( fullsubs)).strip()
+    
+    if response == "":
+        pass
+    elif response == 'zero' or response == '0':
+        fullsubs = 0
+        minsubs = 0
+    elif not is_number( response):
+        print( '{} is not a number.'.format( response))
+        return
+    elif float( response) <= 0.0:
+        fullsubs = 0
+        minsubs = 0
+    elif int( response) > 0:
+        fullsubs = int( response)
+    else:
+        print( 'Did not recognize "{}" for response.'.format( response))
+        return
+    
+    if fullsubs > 0:
+        prompt = "Enter number of submissions where credit reaches minimum." +\
+            "Enter <return> for default of 10 :"
+        response = input( prompt).strip()
+        
+        if response == "":
+            pass
+        elif not is_number( response):
+            print( '{} is not a number.'.format( response))
+            return
+        elif int( response) >= fullsubs:
+            minsubs = int( response)
+        else:
+            print( 'Did not recognize "{}" for response.'.format( response))
+            return
+            
+    if fulldue != "":  ## credit decreases with time, need to know how fast.
+        prompt = 'Enter the number of days (6 hr = 0.25 day) for the credit' +\
+            '\n, default is {},'.format( hours/24) +\
+            ' to decrease from full to the minimum time reduction:'
+        response = input( prompt).strip()
+        
+        if response == "":
+            pass
+        elif not is_number( response):
+            print( '{} is not a number.'.format( response))
+            return
+        hours = float( response)*24
+        
+        prompt = 'Enter minimum credit fraction (1.0 to 0.0) after the decrease' +\
+            '\n with time and submissions has happened. (Default is 0.2):'
+        response = input( prompt).strip()
+        if response == "":
+            pass
+        elif not is_number( response):
+            print( '{} is not a number.'.format( response))
+            return
+        else:
+            tfrac = float( response)
+            if tfrac > 1.0 or tfrac < 0.0:
+                print( '{} is not a valid fractional decrease.'.format( tfrac))
+                return
+ 
+
+    print( 'DBug: fulldue "{}", due {}, fullsubs {}, minsubs {}, tfrac {}, hours {}'.format(
+        fulldue, due, fullsubs, minsubs, tfrac, hours))
+    
+    print( '_____________  Perl Code Below ++++++++++++++')
+    
+    decCredit( fulldue, hours, fullsubs, minsubs, tfrac, due)
+    return
 
 if __name__=="__main__":
     print( '\nTesting BestByMinBefore.py\n')
