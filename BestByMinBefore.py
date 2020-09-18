@@ -1,6 +1,6 @@
 ''' calc minutes before for BestBuy, In-class, etc. questions
 returns a string that is the perl code fragment for specific cases.xs'''
-## ----- Time-stamp: <2020-09-10T17:17:07.297722-04:00 cws2> -----
+## ----- Time-stamp: <2020-09-18T08:36:44.441669-04:00 hedfp> -----
 
  
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -40,6 +40,9 @@ def BB():
     print( 'InCdecCredit( decStart, hoursToMinimum=24)')
     print()
     print( 'HWdecCredit( )')
+    print()
+    print( 'getCCode() --> prompts user for parameter values.')
+    print()
     print( '\n Helpers:')
     print( 'localTimeToGMTepoch( localTime)')
     print()
@@ -224,7 +227,14 @@ def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSu
     if not fullCreditSubs<=0:
         outPerl = outPerl + '&cs9($RESPONSE_NUM,{},{},{})*$POINTS</eqn>'.format(
                 fullCreditSubs, minCreditSubs, subsMult)
-    print( '\n++++++++++++++')
+    print( '\n++++++++++++++ Copy and Paste conditional code starting on next line.' +\
+            '+++++++++++')
+    print( '''<eqn>sub cs9{my($tn,$t1,$t2,$mn)=@_;
+my $f=((1-$mn)*$tn+$mn*$t1-$t2)/($t1-$t2);
+if($tn<=$t1){$f=1}
+if($tn>=$t2){$f=$mn}
+return $f}''')
+    
     print( outPerl)
     # return outPerl
 
@@ -333,13 +343,13 @@ def is_datetime(s):
     Boolean
     '''
     try:
-        ck = localTimeToGMTepoch( s) 
+        localTimeToGMTepoch( s) 
         return True
     except :
         return False
 
 
-def getCode():
+def getCCode():
     '''
     Prompts for arguments to decCredit() and then calls it
     to get Perl code for the conditional credit field in WebAssign.
@@ -399,6 +409,7 @@ def getCode():
     elif response == 'zero' or response == '0':
         fullsubs = 0
         minsubs = 0
+        tfrac = 0.4
     elif not is_number( response):
         print( '{} is not a number.'.format( response))
         return
@@ -432,16 +443,18 @@ def getCode():
             '\n, default is {},'.format( hours/24) +\
             ' to decrease from full to the minimum time reduction:'
         response = input( prompt).strip()
-        
+        print('DBug response: {}'.format( response))
         if response == "":
             pass
         elif not is_number( response):
             print( '{} is not a number.'.format( response))
             return
-        hours = float( response)*24
+        else:
+            hours = float( response)*24
         
         prompt = 'Enter minimum credit fraction (1.0 to 0.0) after the decrease' +\
-            '\n with time and submissions has happened. (Default is 0.2):'
+            '\n with time and submissions has happened. (Default is {}):'.format(
+                tfrac)
         response = input( prompt).strip()
         if response == "":
             pass

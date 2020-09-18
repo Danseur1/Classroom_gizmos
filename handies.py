@@ -4,7 +4,7 @@ Handy Functions and variables/constants for use at iPython prompt
    call mine() for full list of functions and variables.
 
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-09-01T13:58:54.955110-04:00 cws2> ------
+     ------ Time-stamp: <2020-09-18T08:36:44.441669-04:00 hedfp> ------
      
 @author: Carl Schmiedekamp
 
@@ -24,6 +24,8 @@ Created on Sat Feb  1 15:05:51 2020
                 i.e. if IsInteractive flag is False.
 2020-09-02 /CS/ Now sets ipython number precision to 5 digits.
                   (Note: only for expression evaluation output.)
+2020-09-13 /CS/ made the height parameter to figsize optional, with the default
+                  being 0.75 % of width.
 
 """
 
@@ -36,6 +38,8 @@ from math import acos, asin, atan, atan2, degrees, radians
 from math import log, log10, exp
 
 from random import randint
+
+from classroom_gizmos.BestByMinBefore import getCCode
 
 def randomLetter():
     '''
@@ -227,6 +231,7 @@ def mine():
     print('     randomElement( List) ➞ returns random element from list.')
 
     print('From random imports randint( min, max)')
+    print('From classroom_gizmos.BestByMinBefore imports getCode()')
     
     print('From math imports:\n     pi, sqrt, degrees, radians,\n     cos, sin, tan, atan2, asin, acos, atan, and\n' + 
       '     log, log10, exp')
@@ -300,8 +305,8 @@ def cdbn( dirname, sub=None):
     import os
     """ Does cd to directory named in specified environment
         variable.
-        Returns True if no error.
-        If Error, returns False and prints msg.
+        Returns current directory (as string) if no error.
+        If Error, outputs error msg. and returns False.
         --
         If sub is specified, tries to cd to that subdirectory
         after the cd to the contents of env. var.
@@ -315,11 +320,11 @@ def cdbn( dirname, sub=None):
         if os.access( dir, os.R_OK):
             os.chdir( dir)
             if sub==None:
-                return True
+                return os.getcwd()
             else:
                 if os.access( sub, os.R_OK):
                     os.chdir( sub)
-                    return True
+                    return os.getcwd()
                 else:
                     print( '{}: No access!'.format( 
                             os.path.join(dir,sub), dir))
@@ -401,11 +406,14 @@ except ImportError:
     print( 'mjd functions not defined because astropy is not available.')
 
 
-def pltsize( w, h, dpi=150):
+def pltsize( w, h=None, dpi=150):
     '''set plot size (matplotlib), size in notebook depends on resolution ond
     browser settings. However, doubling the values should double the size.
-    dpi is dots-per-inch which also changes plot size in notebooks.'''
+    dpi is dots-per-inch which also changes plot size in notebooks.
+    Default height is .75 times the width.'''
     import matplotlib
+    if h==None:
+        h = 0.75*w
     matplotlib.rc('figure', figsize=[w,h], dpi=dpi)
 
 def osname():
@@ -460,6 +468,8 @@ try:
         return filename
 except ImportError:
     print( 'select_file functions not defined because PyQt5 is not available.')
+
+
 
 
 if __name__ == "__main__":
