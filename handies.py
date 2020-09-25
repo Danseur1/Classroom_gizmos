@@ -26,6 +26,8 @@ Created on Sat Feb  1 15:05:51 2020
                   (Note: only for expression evaluation output.)
 2020-09-13 /CS/ made the height parameter to figsize optional, with the default
                   being 0.75 % of width.
+2020-09-22 /CS/ added VURound and round_sig functions,
+                VURound needs work if uncertainty can have more than 1 sig.fig.
 
 """
 
@@ -40,6 +42,97 @@ from math import log, log10, exp
 from random import randint
 
 from classroom_gizmos.BestByMinBefore import getCCode
+
+
+def round_sig(x, sig=6, small_value=1.0e-9):
+    ''' Round numbers to sig figs.
+     Ref: https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
+     '''
+    return round(x, sig - int(floor(log10(max(abs(x), abs(small_value))))) - 1)
+
+
+def VURound( value, uncertainty, undig=1):
+    '''
+    Returns a string with rounded value and uncertainty.
+    Round value based on uncertainty.
+    Uncertainty is rounded up to "undig" sug.figs.
+      'undig' is currently fixed at 1
+      Based on Javascript function by Carl Schmiedekamp
+    '''
+    from math import copysign, log10, floor, ceil
+    
+    #soecial case: uncertanity is zero: return value as string.
+    if uncertainty==0:
+        return str( value)
+    
+    sign = copysign( 1,value)
+    
+    valin = abs( value)
+    uncin = abs( uncertainty)
+    
+    dec = log10(uncin)
+    # print('DBug uncin, dec, uncertainty', uncin, dec, uncertainty)
+    dec = floor(dec+1)-1
+    
+    uncmant=uncin*pow(10.0,-1*dec)
+    
+    if uncmant > 9: ##Fix if rounding up adds another digit.
+        dec = dec + 1
+        uncmant=uncin*pow(10.0,-1*dec);
+    
+    if round( uncmant) != uncmant:  ##round larger if sigmant is not integral
+        uncmant=int( uncmant+1);
+    
+    ## for values between .1 and 9999. use 2 part output (also equal to zero)
+    if (valin >= .1 and valin <=9999.) or (valin == 0.0):
+        if dec > 0:
+            nd = 0
+        else:
+            nd = -dec
+            
+        fmtstr = '{'+':22.{}f'.format( nd)+'}'
+#        print( 'DBug: fmtstr: {}'.format( fmtstr))
+        
+        if sign < 0:
+#            val3p=str(int(valin*pow(10,-dec)+0.5)*pow(10,dec)*sign)
+            val3p=fmtstr.format( int(valin*pow(10,-dec)+0.5)*pow(10,dec)*sign).strip()
+        else:
+#            val3p=str(int(valin*pow(10,-dec)+0.5)*pow(10,dec))
+            val3p=fmtstr.format( int(valin*pow(10,-dec)+0.5)*pow(10,dec)).strip()
+            
+#        print( 'DBug: valin: {}, dec: {}, val3p: {}, nd: {}'.format( valin, dec, val3p, nd))
+        
+        unc3p = fmtstr.format( uncmant*pow(10,dec) ).strip()
+        
+        return ('{} '+u"\u00B1"+ ' {}').format( val3p, unc3p)
+        
+    else:  ##  otherwise use 4 part output
+        
+        val=int(valin*pow(10,-dec)+0.5)*pow(10,dec)*sign
+        if valin >= uncin:
+            exp=ceil(log10(valin))-1
+        else:
+            exp=ceil(log10(uncin))-1
+        
+        
+        nd = -( dec - exp)
+        
+        if nd < 0:
+            nd = 0
+            
+        fmtstr = '{'+':22.{}f'.format( nd)+'}'
+#        print( 'DBug: fmtstr: {}'.format( fmtstr))
+
+        val = fmtstr.format( val*pow(10,-exp)).strip()
+
+        unc=str(uncmant*pow(10,dec-exp));
+        unc = fmtstr.format( uncmant*pow(10,dec-exp)).strip()
+
+#        print( 'DBug: val: {}, unc: {}, exp: {}, nd: {}'.format( val, unc, exp, nd))
+        
+        return ('({} '+u"\u00B1"+ ' {})' + u"\u00D7" +'10^' + '{}').format( val, unc, exp)
+
+
 
 def randomLetter():
     '''
@@ -171,15 +264,27 @@ def condaEnvName():
     # return Path(sys.executable).as_posix().split('/')[-3]
     return sys.exec_prefix.split(os.sep)[-1]
 
+def ipython_version():
+    try:
+        import IPython
+        ipv = IPython.version_info
+        version = ''
+        for n in ipv:
+            version += str( n) + '_'
+        return version[:-1]  ## remove last '_'
+    except:
+        return None
+ 
+    
+    
 timestamp = getTS( 'timestamp.txt') ##
 date  = timestamp[0:10]
 # print('DBug: date: {} TS:\n{}'.format( date, timestamp))
 
 __version__=get_version("__init__.py")
 
-if IsInteractive:
-    print( "Loading Carl's handies.py ver: {} {}; Python:{}; ENV:{}".format( 
-        __version__, date, python_version(), condaEnvName())) 
+print( "Loading Carl's handies.py ver: {} {}; Python:{}; ENV:{}; IPython: {}".format( 
+        __version__, date, python_version(), condaEnvName(), ipython_version())) 
 
 def call( cmd):
     import subprocess
@@ -211,8 +316,8 @@ def isInstalled( pkgname):
 def mine():
 
     '''List the functions and variables defined in handies.py'''
-    print('\n handies.py ver: {}, modified {}, python {}'.format(
-        __version__, date, python_version()))
+    print('\n classroom_gizmos.handies ver: {}, modified {}'.format(
+        __version__, date))
     if isInstalled( 'astropy'):
         print('Defining:\n     nowMJD(); mjd2date(), date2mjd(),')
         print('     astropy.units as "u", i.e. u.cm or u.GHz')
@@ -231,7 +336,7 @@ def mine():
     print('     randomElement( List) ➞ returns random element from list.')
 
     print('From random imports randint( min, max)')
-    print('From classroom_gizmos.BestByMinBefore imports getCode()')
+    print('From classroom_gizmos.BestByMinBefore imports getCCode()')
     
     print('From math imports:\n     pi, sqrt, degrees, radians,\n     cos, sin, tan, atan2, asin, acos, atan, and\n' + 
       '     log, log10, exp')

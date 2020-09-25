@@ -1,5 +1,6 @@
 ''' calc minutes before for BestBuy, In-class, etc. questions
-returns a string that is the perl code fragment for specific cases.xs'''
+returns a string that is the perl code fragment for specific cases.xs
+2020-09-25 /CS/ revised wording in getCCode() prompts.'''
 ## ----- Time-stamp: <2020-09-18T08:36:44.441669-04:00 hedfp> -----
 
  
@@ -366,10 +367,10 @@ def getCCode():
     tfrac = 0.2
     hours = 12
     
-    prompt = 'If credit does not decrease with time, press <return>, or' +\
-        '\nif it decreases with time enter the date-time the decrease starts' +\
-            '\n formatted like {}:'.format( due)
-    response = input( prompt).strip()
+    print( '\nNote: Default values are in square brackets.\n Date format is {}'.format(
+                due))
+    prompt = 'Enter BestBy date, or <return> if credit does not decrease with time:'
+    response = input( prompt.strip())
     
     if response == "":
         pass
@@ -382,9 +383,7 @@ def getCCode():
     
     if not fulldue == "":
         ## ck if due date is default
-        prompt = 'Press <return> key if {} is the due date of the assignment,' +\
-                 ' according to WebAssign.'
-        prompt = prompt + '\n or enter the due date in same format: '
+        prompt = 'Enter WebAssign due date [{}]:'
         response = input( prompt.format( duedates[ "PHYS250.001"])).strip()
     
         if response == "":
@@ -399,9 +398,7 @@ def getCCode():
         
     
 
-    prompt = 'Press <return> key if {} is the number of submissions' 
-    prompt = prompt + ' that receive full credit, \n or enter number of submissions'
-    prompt = prompt + 'that receive full credit,\n or zero if all submissions receive full credit: '      
+    prompt = 'Enter the number of submissions that receive full credit,\n 0 for all at full credit [{}]:'      
     response = input( prompt.format( fullsubs)).strip()
     
     if response == "":
@@ -423,9 +420,8 @@ def getCCode():
         return
     
     if fullsubs > 0:
-        prompt = "Enter number of submissions where credit reaches minimum." +\
-            "Enter <return> for default of 10 :"
-        response = input( prompt).strip()
+        prompt = "Enter number of submissions where credit reaches minimum [{}]:"
+        response = input( prompt.format( minsubs)).strip()
         
         if response == "":
             pass
@@ -439,10 +435,8 @@ def getCCode():
             return
             
     if fulldue != "":  ## credit decreases with time, need to know how fast.
-        prompt = 'Enter the number of days (6 hr = 0.25 day) for the credit' +\
-            '\n, default is {},'.format( hours/24) +\
-            ' to decrease from full to the minimum time reduction:'
-        response = input( prompt).strip()
+        prompt = 'Enter number days for credit to decrease to minumum [{:.2f}]:'    
+        response = input( prompt.format( hours/24)).strip()
         print('DBug response: {}'.format( response))
         if response == "":
             pass
@@ -451,11 +445,8 @@ def getCCode():
             return
         else:
             hours = float( response)*24
-        
-        prompt = 'Enter minimum credit fraction (1.0 to 0.0) after the decrease' +\
-            '\n with time and submissions has happened. (Default is {}):'.format(
-                tfrac)
-        response = input( prompt).strip()
+        prompt = 'Enter fractional credit after time and submission limits [{}]:'
+        response = input( prompt.format( tfrac)).strip()
         if response == "":
             pass
         elif not is_number( response):
