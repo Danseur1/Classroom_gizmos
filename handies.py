@@ -283,7 +283,7 @@ date  = timestamp[0:10]
 
 __version__=get_version("__init__.py")
 
-print( "Loading Carl's handies.py ver: {} {}; Python:{}; ENV:{}; IPython: {}".format( 
+print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}".format( 
         __version__, date, python_version(), condaEnvName(), ipython_version())) 
 
 def call( cmd):

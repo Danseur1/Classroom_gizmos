@@ -4,12 +4,16 @@
 Created on Fri May 15 15:53:29 2020
 
 @author: cws2
-@Time-stamp: <2020-08-19T16:05:58.744893-04:00 cws2>
+@Time-stamp: <2020-09-30T06:58:36.237270-04:00 hedfp>
 
 
 importInstall - tests import of package and if that fails, tries to install
-  and then tries again to import the package.
+  and then tries again to import the package. If it succedes, returns module
+  object.
 Copyright (C) 2020 Carl Schmiedekamp
+
+2020-09-30 /CS/ Added rough progress indication by outputing '*' on each call
+                to runCatch(), when verboseInstall is False
 
 """
 
@@ -112,6 +116,9 @@ def runCatch( it):
     for cmd_i in cmdList:
         if verboseInstall:
             print( 'Trying to execute:\n{}'.format( cmd_i))
+        else:
+            print( ' *', end='')
+
         try:
             cmds = cmd_i.split()
             returned = subprocess.Popen( cmds, stdout=subprocess.PIPE,
@@ -188,7 +195,11 @@ def importInstall( pkgname, installname=None):
         return pkg
     except Exception:
         
-        print( '\nTrying to install {}, this may take a while.\n'.format( pkgname))
+        # print( '\nTrying to install {}, this may take a while.\n'.format( pkgname))
+        print( '\nTrying to install {}, this may take a while.'.format(
+            pkgname), end='')
+        if verboseInstall:
+            print('\n\n')
 
         
         ## import failed, so now try to install
@@ -208,10 +219,13 @@ def importInstall( pkgname, installname=None):
                 pkg = __import__( pkgname)
                 if verboseInstall:
                     print( ' {} imported.'.format( pkgname))
-                    return pkg
+                else:
+                    print('\n')
+                return pkg
             except Exception:
                 None
             ## if special install fails, try other ways.
+        
 
 	## try installing from conda repository if conda is available
         if ( condaPrefix != None) and runCatch( 'conda install --yes --prefix ' +\
@@ -219,6 +233,8 @@ def importInstall( pkgname, installname=None):
             pkg = __import__( pkgname)
             if verboseInstall:
                 print( ' {} imported.'.format( pkgname))
+            else:
+                print('\n')
             return pkg
 
 	## try installing from conda-forge repository
@@ -228,6 +244,8 @@ def importInstall( pkgname, installname=None):
             ##print( 'At 6')
             if verboseInstall:
                 print( ' {} imported.'.format( pkgname))
+            else:
+                print('\n')
             return pkg
 
         ## try installing with pip
@@ -236,6 +254,8 @@ def importInstall( pkgname, installname=None):
             ##print( 'At 7')
             if verboseInstall:
                 print( ' {} imported.'.format( pkgname))
+            else:
+                print('\n')
             return pkg
 	
 	## try installing with pip to user directory
@@ -244,12 +264,16 @@ def importInstall( pkgname, installname=None):
             ##print( 'At 7')
             if verboseInstall:
                 print( ' {} imported.'.format( pkgname))
+            else:
+                print('\n')
             return pkg
         
         else:   
             ##print( 'At 8')
             if verboseInstall:
                 print( ' --> Problems importing or installing {}!'.format( pkgname))
+            else:
+                print('\n')
             return None
 ii = importInstall             ## alias
 import_install = importInstall ## alias
@@ -281,7 +305,8 @@ if __name__ == "__main__":
     
     vpython = importInstall( 'vpython')
     from vpython import *
-    ball = sphere( color=color.blue)
+    ## 2020-09-30  crashes Spyder when vpython browser window is clossed:
+    # ball = sphere( color=color.blue)
     
     if fullInstallList: ## try a lot of packages
         ndt = importInstall( 'numdifftools')
@@ -305,14 +330,6 @@ if __name__ == "__main__":
     
         saba = importInstall( 'saba')
         
-        oops1 = importInstall( 'pscTest')
-        oops2 = importInstall( 'fredricka')
-        print( '\n\nsaba: {}; oops1: {}; oops2: {}'.format( saba, oops1, oops2))
-    else:
-        oops2 = importInstall( 'fredricka')
-        print( 'Trying fredricka: ImportInstall returned {}'.format( oops2))
- 
-      
         oops1 = importInstall( 'pscTest')
         oops2 = importInstall( 'fredricka')
         print( '\n\nsaba: {}; oops1: {}; oops2: {}'.format( saba, oops1, oops2))
