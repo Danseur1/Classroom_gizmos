@@ -26,4 +26,4 @@ Implements an ipywidget based file browser for Jupyter notebooks.
 
 ### BestByMinBefore
 Used for creating Perl snippits useful for WebAssign scoring algorithms.
-<tt>getCCode()</tt> is a 'wizard' innterface that prompts for needed values.
+<tt>getCCode()</tt> is a 'wizard' interface that prompts for needed values.
