@@ -20,14 +20,16 @@ Created on Sat Feb  1 15:05:51 2020
 2020-07-29 /CS/ added isInstalled()
 2020-08-13 /CS/ added condaEnvName() as a helper function.
 2020-08-25 /CS/ added 'line magic' cls to fill screen with 23 blank lines.
-                the 'Loading' message is not output if not in interpreter,
-                i.e. if IsInteractive flag is False.
+                the 'Loading' message is not output if not in IPython or the
+                interactive interpreter.
 2020-09-02 /CS/ Now sets ipython number precision to 5 digits.
                   (Note: only for expression evaluation output.)
 2020-09-13 /CS/ made the height parameter to figsize optional, with the default
                   being 0.75 % of width.
 2020-09-22 /CS/ added VURound and round_sig functions,
                 VURound needs work if uncertainty can have more than 1 sig.fig.
+2020-10-16 /CS/ Add is_ipython(), is_interactive(), and is_commandline() to test
+                running environment.
 
 """
 
@@ -35,7 +37,7 @@ Created on Sat Feb  1 15:05:51 2020
 ## Shortcuts etc. functions.
 import math
 import codecs
-from math import pi, sqrt, cos, sin, tan
+from math import pi, sqrt, cos, sin, tan, floor
 from math import acos, asin, atan, atan2, degrees, radians
 from math import log, log10, exp
 
@@ -43,6 +45,42 @@ from random import randint
 
 from classroom_gizmos.BestByMinBefore import getCCode
 
+def is_ipython():
+    '''Return True if running in IPython.
+    Ref: https://stackoverflow.com/questions/23883394/detect-if-python-script-is-run-from-an-ipython-shell-or-run-from-the-command-li
+    '''
+    try:
+        __IPYTHON__
+    except NameError:
+        result = False
+    else:
+        result = True
+    return result
+
+def is_interactive():
+    '''Return True if running interactive interpreter but not IPython.
+    Ref: https://stackoverflow.com/questions/23883394/detect-if-python-script-is-run-from-an-ipython-shell-or-run-from-the-command-li
+    '''
+    import inspect
+    
+    if len( inspect.stack()) > 1 and not is_ipython():
+        result = True
+    else:
+        result = False
+    return result
+
+def is_commandline():
+    '''Returns True if running from command line (not ipython, and not interactive
+    interpreter.).
+    Ref: https://stackoverflow.com/questions/23883394/detect-if-python-script-is-run-from-an-ipython-shell-or-run-from-the-command-li
+    '''
+    import inspect
+    
+    if len( inspect.stack()) == 1 :
+        result = True
+    else:
+        result = False
+    return result
 
 def round_sig(x, sig=6, small_value=1.0e-9):
     ''' Round numbers to sig figs.
@@ -152,7 +190,7 @@ def randomElement( List=(1,2,3,4,5,6,7, 'oops')):
     return random element of list
 
     '''
-    index = randint(0, len( List))
+    index = randint(0, len( List)-1)
     return List[ index]
 
 
@@ -216,42 +254,59 @@ def get_version(rel_path):
         raise RuntimeError("Unable to find version string.")
 
 
-## set IsInteractive flag and define cls as line magic
-IsInteractive = False
-try:
-    from IPython.core.magic import (register_line_magic, register_cell_magic,
-                                register_line_cell_magic)
-    ## Ref: https://stackoverflow.com/questions/2356399/tell-if-python-is-in-interactive-mode
-    ## Ref: https://ipython.readthedocs.io/en/stable/config/custommagics.html
-    
-    try:
-        if sys.ps1:
-            IsInteractive = True
-        
-    except AttributeError:
-        interpreter = False
-        if sys.flags.interactive: IsInteractive = True
-        
-        
-    if IsInteractive:
-        ### set default float precision
-        ### Ref: https://stackoverflow.com/questions/10361206/how-to-run-an-ipython-magic-from-a-script-or-timing-a-python-script
-        from IPython import get_ipython
-        ipython = get_ipython()
-        ipython.magic( 'precision %0.5g')
-        
-        ### define clear screen magic (%cls generates 23 blank lines)
-        @register_line_magic 
-        def cls(line): 
-            '''Defines a 'clear screen' line magic'''
-            print( 23*'\n') 
-            return
-            
-except ( ModuleNotFoundError, ImportError):
-    IsInteractive = False
-else:
-    del cls ## must delete function to make magic visible.
 
+## define cls and set precision if in IPython.
+if is_ipython():
+    ### set default float precision
+    ### Ref: https://stackoverflow.com/questions/10361206/how-to-run-an-ipython-magic-from-a-script-or-timing-a-python-script
+    from IPython import get_ipython
+    from IPython.core.magic import register_line_magic
+            
+    ipython = get_ipython()
+    ipython.magic( 'precision %0.5g')
+            
+    ### define clear screen magic (%cls generates 23 blank lines)
+    @register_line_magic 
+    def cls(line): 
+        '''Defines a 'clear screen' line magic'''
+        print( 23*'\n') 
+        return
+
+    del cls ## must delete function to make magic visible.
+    
+    # try:
+    #     from IPython.core.magic import register_line_magic
+    #     ## Ref: https://stackoverflow.com/questions/2356399/tell-if-python-is-in-interactive-mode
+    #     ## Ref: https://ipython.readthedocs.io/en/stable/config/custommagics.html
+        
+    #     try:
+    #         if sys.ps1:
+    #             IsInteractive = True
+            
+    #     except AttributeError:
+    #         interpreter = False
+    #         if sys.flags.interactive: IsInteractive = True
+            
+            
+    #     if IsInteractive:
+    #         ### set default float precision
+    #         ### Ref: https://stackoverflow.com/questions/10361206/how-to-run-an-ipython-magic-from-a-script-or-timing-a-python-script
+    #         from IPython import get_ipython
+    #         ipython = get_ipython()
+    #         ipython.magic( 'precision %0.5g')
+            
+    #         ### define clear screen magic (%cls generates 23 blank lines)
+    #         @register_line_magic 
+    #         def cls(line): 
+    #             '''Defines a 'clear screen' line magic'''
+    #             print( 23*'\n') 
+    #             return
+                
+    # except ( ModuleNotFoundError, ImportError):
+    #     IsInteractive = False
+    # else:
+    #     del cls ## must delete function to make magic visible.
+    
     
 
 ######  'Welcome Message' on loading  ######
@@ -283,8 +338,9 @@ date  = timestamp[0:10]
 
 __version__=get_version("__init__.py")
 
-print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}".format( 
-        __version__, date, python_version(), condaEnvName(), ipython_version())) 
+if is_interactive() or is_ipython():
+    print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}".format( 
+            __version__, date, python_version(), condaEnvName(), ipython_version())) 
 
 def call( cmd):
     import subprocess
@@ -349,9 +405,9 @@ def mine():
            ' timeout value.')
     
 ##Ref: https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-precision
-    prhints = ('Hint:\n' + 
-          '     "%precision %g" or %.6g for better number formats.')
-    print(prhints)
+    # prhints = ('Hint:\n' + 
+    #       '     "%precision %g" or %.6g for better number formats.')
+    # print(prhints)
 
 
 def cosD( ang):
