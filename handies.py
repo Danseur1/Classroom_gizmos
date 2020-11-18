@@ -4,7 +4,7 @@ Handy Functions and variables/constants for use at iPython prompt
    call mine() for full list of functions and variables.
 
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-09-18T08:36:44.441669-04:00 hedfp> ------
+     ------ Time-stamp: <2020-11-13T15:45:38.024361-05:00 hedfp> ------
      
 @author: Carl Schmiedekamp
 
@@ -30,6 +30,8 @@ Created on Sat Feb  1 15:05:51 2020
                 VURound needs work if uncertainty can have more than 1 sig.fig.
 2020-10-16 /CS/ Add is_ipython(), is_interactive(), and is_commandline() to test
                 running environment.
+2020-10-30 /CS/ adding astropy.constants as c
+2020-11-02 /CS/ added clsall() which clears terminal screen of all characters.
 
 """
 
@@ -42,8 +44,28 @@ from math import acos, asin, atan, atan2, degrees, radians
 from math import log, log10, exp
 
 from random import randint
+from beepy import beep
+import time
 
 from classroom_gizmos.BestByMinBefore import getCCode
+from classroom_gizmos.import_install import importInstall as II
+
+def count_down(t):
+    beepy = II( 'beepy')
+    while t:
+        mins, secs = divmod(t, 60)
+        timeformat = '{:02d}:{:02d} '.format(mins, secs)
+        print(timeformat, end='\r')
+        time.sleep(1)
+        t -= 1
+    print('\a\n\nDone!\n\n')
+    if beepy!=None:
+        beepy.beep(1)
+
+def clsall():
+    '''Outputs the ASCII clear screen character.
+    This usually deletes all the previoous text in the terminal.'''
+    print( '\033[2J', end=None)
 
 def is_ipython():
     '''Return True if running in IPython.
@@ -93,7 +115,7 @@ def VURound( value, uncertainty, undig=1):
     '''
     Returns a string with rounded value and uncertainty.
     Round value based on uncertainty.
-    Uncertainty is rounded up to "undig" sug.figs.
+    Uncertainty is rounded up to "undig" sig.figs.
       'undig' is currently fixed at 1
       Based on Javascript function by Carl Schmiedekamp
     '''
@@ -205,7 +227,7 @@ def timeStampStr():
     tz = datetime.timezone(datetime.timedelta(seconds = st_time.tm_gmtoff)) # Create a timezone object with the computed offset in the struct_time.
     return dt.astimezone(tz).isoformat()
 
-import math
+# import math
 ## math.comb is in Python 3.8 
 if hasattr( math, "comb" ):
     from math import comb
@@ -229,7 +251,8 @@ def hostname():
 
 def getTS( rel_path):
     '''Reads first line of specified file, which is expected to be a time-date
-    string.'''
+    string.
+    This is mostly for internal package use.'''
     here = os.path.abspath(os.path.dirname(__file__))
     with codecs.open(os.path.join(here, rel_path), 'r') as tsf:
         lines = tsf.read()
@@ -331,7 +354,7 @@ def ipython_version():
         return None
  
     
-    
+## Get timestamp for package, updated by setup.py.
 timestamp = getTS( 'timestamp.txt') ##
 date  = timestamp[0:10]
 # print('DBug: date: {} TS:\n{}'.format( date, timestamp))
@@ -345,9 +368,8 @@ if is_interactive() or is_ipython():
 def call( cmd):
     import subprocess
     '''Modeled after call function in NANOGrav Sprinng 2020 workshop.
-    call() just executes the command in the shell and displays output,
-    while runCatch( cmd) tries to catch all errors and output and only returns
-    True or False to indicate success or failure.
+    call() just executes the command in the shell and displays output.
+    
     Could have security issues. See subprocess documentation.'''
     subprocess.call( cmd, shell=True)
 
@@ -355,6 +377,7 @@ def isInstalled( pkgname):
     ''' Imports pkgname and returns package if installed.
         pkgname is a string with name of package as used in import stmt.
         If not installed, returns None.
+        Should be a duplicate of import_install.is_installed().
         Typical Usage:
             astropy = isInstalled( 'astropy') 
             if astropy == None:
@@ -377,32 +400,52 @@ def mine():
     if isInstalled( 'astropy'):
         print('Defining:\n     nowMJD(); mjd2date(), date2mjd(),')
         print('     astropy.units as "u", i.e. u.cm or u.GHz')
+        print('     astropy.constants as "c", i.e. c.c or c.au')
+    else:
+        print( '** astropy not available; MJD functions, u (units) and c (constants) are not available.')
     print('     cdbn(), osname(), hostname(), call(),')
     if isInstalled( 'PyQt5'):
-        print('     select_file(), select_file_timeout( timeout={}),'.format( sfTimeOut))
+        if isInstalled( 'func_timeout'):
+            print('     select_file(), select_file_timeout( timeout={}),'.format( sfTimeOut))
+        else:
+            print('** func_timeout not available; select_file_timeout() ignores timeout.')
+            print('     select_file()')
+        
+    else:
+        print( '** PyQt5 is not available; select_file() and select_file_timeout() are not defined.')
     print('     rad(), deg(), sinD(), cosD(), tanD(), asinD(),\n     acosD(), atanD(), atan2D(), atan2P()')
     print("       'D' and 'P' functions work with degrees.")
     print("       'P' inverse functions return only positive angles.")
-    print("Defines nCr AKA comb or imports from math if available.")
+    print("     Defines nCr() and comb() or imports from math if available.")
     print('     greeks  ➞ a string with greek alphabet.')
-    print('     pltsize( w, h) ➞ resizes plots in matplotlib, units are inches')
+    print('     cls or %cls; ipython \'magic\' writes 23 blank lines to clear an area of the screen')
+    print('     clsall() function which removes previous text on screen by outputing ascii code.')
+    print('     pltsize( width) ➞ resizes plots in matplotlib, units are inches')
     print('     timeStampStr() ➞ returns a readable timestamp string.')
     print('     isInstalled( pkgNameStr) ➞ returns package or None if not installed.')
+    print('     is_ipython() ➞ True if running in ipython.')
+    print('     is_interactive() ➞ True if in interactive interpreter but not in ipython.')
+    print('     is_commandline() ➞ True if running from commandline;not interactive nor ipython.')
+    print('     VURound( value, uncertainty) ➞ Rounds value based on uncertainty.')
+    print('     round_sig( value, sigfigs) ➞ Rounds value to specified sig.figs.')
+    print('     count_down() ➞ Counts down the specified number of seconds.')
+
     print('     randomLetter() ➞ a random uppercase ASCII letter.')
     print('     randomElement( List) ➞ returns random element from list.')
+    
+    print()
 
+    print('From beepy imports beep()')
     print('From random imports randint( min, max)')
     print('From classroom_gizmos.BestByMinBefore imports getCCode()')
+    print('From classroom_gizmos.import_install imports import_install as II')
     
     print('From math imports:\n     pi, sqrt, degrees, radians,\n     cos, sin, tan, atan2, asin, acos, atan, and\n' + 
       '     log, log10, exp')
 
     print( '\n     mine() ➞ lists what handies.py defines.')
 
-    print( '\nIf astropy package is not available, "u" and the mjd functions are not defined.')
-    print( 'If PyQt5 package is not available, the select_file functions are not defined.')
-    print( 'If func_timeout package is not availabe, the select_file_timeout ignores the'+\
-           ' timeout value.')
+    print( '\nRequires astropy, PyQt5, and func_timeout packages for full functionality.')
     
 ##Ref: https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-precision
     # prhints = ('Hint:\n' + 
@@ -509,6 +552,7 @@ def cdbn( dirname, sub=None):
 try:
     import astropy
     from astropy import units as u
+    from astropy import constants as c
     
     def nowMJD():
         '''Convert current time to MJD'''
@@ -568,7 +612,7 @@ except ImportError:
 
 
 def pltsize( w, h=None, dpi=150):
-    '''set plot size (matplotlib), size in notebook depends on resolution ond
+    '''set plot size (matplotlib), size in notebook depends on resolution and
     browser settings. However, doubling the values should double the size.
     dpi is dots-per-inch which also changes plot size in notebooks.
     Default height is .75 times the width.'''

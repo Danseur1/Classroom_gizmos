@@ -4,7 +4,7 @@
 Created on Fri May 15 15:53:29 2020
 
 @author: cws2
-@Time-stamp: <2020-09-30T06:58:36.237270-04:00 hedfp>
+@Time-stamp: <2020-11-13T15:45:38.024361-05:00 hedfp>
 
 
 importInstall - tests import of package and if that fails, tries to install
@@ -141,6 +141,39 @@ def runCatch( it):
                 success = False
     return success
 
+def call_verbose( cmd):
+    '''Execute shell command and report return code, output, and errors.
+    cmd is string or list of strings to be executed.
+    Note each command is executed in the current directory.
+    Ref: https://www.golinuxcloud.com/python-subprocess/#Using_python_subprocess_call()_function'''
+    
+    import subprocess
+    
+    if isinstance( cmd, list):
+        cmdList = cmd
+    else:
+        cmdList = [ cmd]
+
+    for cmdstr in cmdList:
+        print('cmd is\n >>>', cmdstr)
+        # Use shell to execute the command
+        sp = subprocess.Popen(cmdstr,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True)
+        
+        # Separate the output and error.
+        # This is similar to Tuple where we store two values to two different variables
+        out,err=sp.communicate()
+        
+        # Store the return code in rc variable
+        rc=sp.wait()
+        
+        print('Return Code:',rc,'\n')
+        print('output is: \n', out)
+        print('error is: \n', err)
+    
 
 def hasConda():
     '''returns True if running in Conda (if package conda is available).'''
@@ -161,6 +194,24 @@ def locatePythonPrefix():
         condaPrefix = None
     return pythonExe, condaPrefix
 
+def is_installed( pkgname):
+    ''' Imports pkgname and returns package if installed.
+        pkgname is a string with name of package as used in import stmt.
+        If not installed, returns None.
+        This should be a copy of isInstalled() in handies.
+        No attempt to install is made.
+        Typical Usage:
+            astropy = isInstalled( 'astropy') 
+            if astropy == None:
+                ... 
+            else:
+                from astropy import units as u
+        '''
+    try:
+        pkg = __import__( pkgname)
+        return pkg
+    except Exception:
+    	return None
     
 def importInstall( pkgname, installname=None):
     '''Tries to import package named in string 'pkgname'.
@@ -275,10 +326,54 @@ def importInstall( pkgname, installname=None):
             else:
                 print('\n')
             return None
+        
 ii = importInstall             ## alias
 import_install = importInstall ## alias
 
+def pkg_from_path( pkg_name, pkg_path):
+    '''
+    Ref: https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
 
+    Parameters
+    ----------
+    pkg_name : string
+        DESCRIPTION.
+    pkg_path : string
+        For a package, it is the full path to the __init__.py file.
+
+    Returns
+    -------
+    my_module : module  --Experimental --
+    
+    Useful for testing a development version??
+    
+    usage:
+            pkgname = 'classroom_gizmos'
+            path = pkg_from_path(pkg_name, pkg_path)
+        
+            classroom_gizmos = pkg_from_path( pkgname, path)
+        
+            # pkg = import_local( pkgname, path)
+            
+            print( classroom_gizmos)
+            
+            from classroom_gizmos.handies import *
+    
+
+
+    '''
+    # pkg_path = "/path/to/your/module/__init__.py"
+    # pkg_name = "mymodule"
+    
+    import importlib
+    import sys
+    spec = importlib.util.spec_from_file_location(pkg_name, pkg_path)
+    my_pkg = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = my_pkg
+    spec.loader.exec_module( my_pkg)
+    
+    return my_pkg
+    
    
 if __name__ == "__main__":
         
