@@ -47,9 +47,9 @@ from random import randint
 import time
 
 ### Current rule of thumb: only handies imports from other modules.
-from BestByMinBefore import getCCode
-from import_install import importInstall as II
-from import_install import ckII
+from classroom_gizmos.BestByMinBefore import getCCode
+from classroom_gizmos.import_install import importInstall as II
+from classroom_gizmos.import_install import ckII
 
 
 def clsall():
