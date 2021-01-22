@@ -5,5 +5,5 @@
    -------   Time-stamp: <2021-01-22 15:47:35 hedfp>   ------  '''
 
 
-__version__ = "0.0b2.dev25" # X.YaN.devM format for now
+__version__ = "0.0b2.dev26" # X.YaN.devM format for now
 
