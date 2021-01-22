@@ -4,7 +4,7 @@
 Created on Fri May 15 15:53:29 2020
 
 @author: cws2
-@Time-stamp: <2020-11-13T15:45:38.024361-05:00 hedfp>
+@Time-stamp: <2020-11-24T18:06:53.308934-05:00 hedfp>
 
 
 importInstall - tests import of package and if that fails, tries to install
@@ -14,10 +14,16 @@ Copyright (C) 2020 Carl Schmiedekamp
 
 2020-09-30 /CS/ Added rough progress indication by outputing '*' on each call
                 to runCatch(), when verboseInstall is False
-
+2020-12-03 /CS/ added ]'--use-local' to conda commands,
+                put all calls to __import__ in try/except blocks.
 """
 
 '''
+ ## To Be Considered:
+     - a list of git special cases
+     - OS specific installs
+
+
 Ref: https://stackoverflow.com/questions/12332975/installing-python-module-within-code
 
 Ref: https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-jupyter/
@@ -27,6 +33,9 @@ Ref: https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-j
 import sys
 import subprocess
 
+import ensurepip  ## use this on systems without pip installed.
+                    ## ensurepip.bootstrap can install pip as local user.
+
 ## Here add unusual install commands, use list if more than one command line is needed.
 
 verboseInstall = False 
@@ -35,7 +44,7 @@ PipSpecialCases = { }
 
 PipSpecialCases[ 'p2j'] = 'pip install git+https://github.com/remykarem/python2jupyter#egg=p2j'
 PipSpecialCases[ 'pypulse'] = 'python -m pip install git+https://github.com/mtlam/PyPulse#egg=PyPulse'
-PipSpecialCases[ 'saba'] = ['conda install --yes -c sherpa sherpa', 'pip install saba']
+PipSpecialCases[ 'saba'] = ['conda install --use-local --yes -c sherpa sherpa', 'pip install saba']
 
 PipSpecialCases[ 'func_timeout'] = ['pip install func-timeout']
 
@@ -49,12 +58,12 @@ PipSpecialCases[ 'ipyvolume'] = ['pip install ipyvolume',
 #    https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
 
 CondaSpecialCases = {}
-CondaSpecialCases[ 'pymc3'] = 'conda install --yes -c conda-forge pymc3'
-CondaSpecialCases[ 'ipyvolume'] = 'conda install --yes -c conda-forge ipyvolume'
-CondaSpecialCases[ 'wordcloud'] = 'conda install --yes -c conda-forge wordcloud'
+CondaSpecialCases[ 'pymc3'] = 'conda install --use-local --yes -c conda-forge pymc3'
+CondaSpecialCases[ 'ipyvolume'] = 'conda install --use-local --yes -c conda-forge ipyvolume'
+CondaSpecialCases[ 'wordcloud'] = 'conda install --use-local --yes -c conda-forge wordcloud'
 
 
-## CondaSpecialCases[ 'vpython'] = 'conda install --yes -c vpython vpython'
+## CondaSpecialCases[ 'vpython'] = 'conda install --use-local --yes -c vpython vpython'
 ## in illumidesk, installs with pip but not conda.
 
 
@@ -85,14 +94,14 @@ PipInstallDict[ 'scipy+'] = 'python -m pip install --user numpy scipy matplotlib
 
 ## CondaInstallDict is not currently used
 CondaInstallDict = { }
-CondaInstallDict[ 'pip'] = 'conda install --yes pip'
-CondaInstallDict[ 'sympy'] = 'conda install --yes sympy'
-CondaInstallDict[ 'astropy'] = 'conda install --yes astropy'
-CondaInstallDict[ 'matplotlib'] = 'conda install --yes matplotlib'
-CondaInstallDict[ 'pymc3'] = 'conda install --yes -c conda-forge pymc3'
-CondaInstallDict[ 'seaborn'] = 'conda install --yes seaborn '
+CondaInstallDict[ 'pip'] = 'conda install --use-local --yes pip'
+CondaInstallDict[ 'sympy'] = 'conda install --use-local --yes sympy'
+CondaInstallDict[ 'astropy'] = 'conda install --use-local --yes astropy'
+CondaInstallDict[ 'matplotlib'] = 'conda install --use-local --yes matplotlib'
+CondaInstallDict[ 'pymc3'] = 'conda install --use-local --yes -c conda-forge pymc3'
+CondaInstallDict[ 'seaborn'] = 'conda install --use-local --yes seaborn '
 CondaInstallDict[ 'emcee'] = [ 'conda update conda',
-                               'conda install --yes -c conda-forge emcee']
+                               'conda install --use-local --yes -c conda-forge emcee']
 CondaInstallDict[ 'ctest'] = [ 'conda update conda', 'python -m pip install -U pip']
 
 
@@ -171,17 +180,24 @@ def call_verbose( cmd):
         rc=sp.wait()
         
         print('Return Code:',rc,'\n')
-        print('output is: \n', out)
-        print('error is: \n', err)
+        print('Output is: \n', out)
+        print('ErrorOut is: \n', err)
     
 
 def hasConda():
-    '''returns True if running in Conda (if package conda is available).'''
+    '''returns True if running in Conda 
+    (if package conda is available from command line).'''
+    return runCatch( 'conda --version')
+
+def check_install_pip():
+    '''Checks that pip is installed, 
+    if not tries to install pip locally via ensurepip.bootstrap,
+    if that fails, throw NoPip exception.'''
     try:
-        __import__( 'conda')
-        return True
-    except ImportError: 
-        return False
+        import pip
+    except Exception:
+        print( 'pip could not be imported')
+    
 
 def locatePythonPrefix():
     '''setup python executable path and condaprefix if conda is used.
@@ -230,7 +246,7 @@ def importInstall( pkgname, installname=None):
      If there were no successful install, an error message is reported and None
      is returned.
      Also defined are these two aliases:
-         ii
+         II
          import_install
         '''
     if installname == None:
@@ -274,50 +290,63 @@ def importInstall( pkgname, installname=None):
                     print('\n')
                 return pkg
             except Exception:
-                None
+                pass
             ## if special install fails, try other ways.
         
 
 	## try installing from conda repository if conda is available
-        if ( condaPrefix != None) and runCatch( 'conda install --yes --prefix ' +\
+        if ( condaPrefix != None) and runCatch( 'conda install --use-local --yes --prefix ' +\
                                     condaPrefix + ' ' + installfromname):
-            pkg = __import__( pkgname)
-            if verboseInstall:
-                print( ' {} imported.'.format( pkgname))
-            else:
-                print('\n')
-            return pkg
+            try:
+                pkg = __import__( pkgname)
+                if verboseInstall:
+                    print( ' {} imported.'.format( pkgname))
+                else:
+                    print('\n')
+                return pkg
+            except Exception:
+                pass
 
 	## try installing from conda-forge repository
-        elif ( condaPrefix != None) and runCatch( 'conda install --yes --prefix ' +\
+        elif ( condaPrefix != None) and runCatch( 'conda install --use-local --yes --prefix ' +\
                                     condaPrefix + ' -c conda-forge ' + installfromname):
-            pkg = __import__( pkgname)
-            ##print( 'At 6')
-            if verboseInstall:
-                print( ' {} imported.'.format( pkgname))
-            else:
-                print('\n')
-            return pkg
+            try:
+                pkg = __import__( pkgname)
+                ##print( 'At 6')
+                if verboseInstall:
+                    print( ' {} imported.'.format( pkgname))
+                else:
+                    print('\n')
+                return pkg
+            except Exception:
+                pass
 
-        ## try installing with pip
-        elif runCatch( pythonExe + ' -m pip install ' + installfromname):
-            pkg = __import__( pkgname)
-            ##print( 'At 7')
-            if verboseInstall:
-                print( ' {} imported.'.format( pkgname))
-            else:
-                print('\n')
-            return pkg
+        # ## try installing with pip (disabled, in case it would prompt for permission)
+        # elif runCatch( pythonExe + ' -m pip install ' + installfromname):
+        #     pkg = __import__( pkgname)
+        #     ##print( 'At 7')
+        #     if verboseInstall:
+        #         print( ' {} imported.'.format( pkgname))
+        #     else:
+        #         print('\n')
+        #     return pkg
 	
 	## try installing with pip to user directory
         elif runCatch( pythonExe + ' -m pip install --user ' + installfromname):
-            pkg = __import__( pkgname)
-            ##print( 'At 7')
-            if verboseInstall:
-                print( ' {} imported.'.format( pkgname))
-            else:
-                print('\n')
-            return pkg
+            try:
+                pkg = __import__( pkgname)
+                ##print( 'At 7')
+                if verboseInstall:
+                    print( ' {} imported.'.format( pkgname))
+                else:
+                    print('\n')
+                return pkg
+            except Exception:
+                if verboseInstall:
+                    print( ' --> Had problems importing or installing {}!'.format( pkgname))
+                else:
+                    print('\n')
+                return None
         
         else:   
             ##print( 'At 8')
@@ -327,8 +356,17 @@ def importInstall( pkgname, installname=None):
                 print('\n')
             return None
         
-ii = importInstall             ## alias
+II = importInstall             ## alias
 import_install = importInstall ## alias
+
+def ckII( pkgname, importname=None):
+    '''Import/install package and print package version.'''
+    pkg = II( pkgname, importname)
+    if pkg==None:
+        print( '{} was not found and could not be installed.'.format( pkgname))
+    elif pkg.__name__ == pkgname:
+        print( 'Package {} is installed, version {}.'.format( pkgname, pkg.__version__))
+    return pkg
 
 def pkg_from_path( pkg_name, pkg_path):
     '''
@@ -374,11 +412,12 @@ def pkg_from_path( pkg_name, pkg_path):
     
     return my_pkg
     
+
    
 if __name__ == "__main__":
         
-    verboseInstall = False ## turn on/off extra output
-    fullInstallList = False ## True -> do full list of install checks.
+    verboseInstall = True ## turn on/off extra output
+    fullInstallList = True ## True -> do full list of install checks.
     
     platform = importInstall( 'platform')
     os = importInstall( 'os')
@@ -423,12 +462,23 @@ if __name__ == "__main__":
         wxpython = importInstall( 'wx', 'wxpython')
         # func_timeout = importInstall( 'func_timeout')
     
+        if os.name == 'nt':
+            print( 'Note: sherpa may not install on NT, trying anyway.')
         saba = importInstall( 'saba')
         
         oops1 = importInstall( 'pscTest')
         oops2 = importInstall( 'fredricka')
         print( '\n\nsaba: {}; oops1: {}; oops2: {}'.format( saba, oops1, oops2))
     else:
-        oops2 = importInstall( 'fredricka')
-        print( 'Trying fredricka: ImportInstall returned {}'.format( oops2))
- 
+        oops2 = importInstall( 'fredricka536092')
+        print( 'Trying fredricka536092: ImportInstall returned {}'.format( oops2))
+    
+    import socket
+    computer_name = socket.getfqdn()
+    if  computer_name == 'Yoga-New':
+        ckpypulse = pkg_from_path( 'pypulse', r"C:\Users\hedfp\OneDrive - The Pennsylvania State University\Pythonista\PyPulse\pypulse\__init__.py")
+        print( 'For pypulse, pkg_from_path returned type {}'.format( type( ckpypulse)))
+    import numpy as ckpath
+    npck = pkg_from_path( 'numpy', ckpath.__file__)
+    print( 'numpy version via pkg_from_path: {}'.format( npck.__version__))
+    

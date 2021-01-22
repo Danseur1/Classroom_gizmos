@@ -4,7 +4,7 @@ Handy Functions and variables/constants for use at iPython prompt
    call mine() for full list of functions and variables.
 
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-11-13T15:45:38.024361-05:00 hedfp> ------
+     ------ Time-stamp: <2020-12-11T14:38:28.992678-05:00 hedfp> ------
      
 @author: Carl Schmiedekamp
 
@@ -44,28 +44,28 @@ from math import acos, asin, atan, atan2, degrees, radians
 from math import log, log10, exp
 
 from random import randint
-from beepy import beep
 import time
 
-from classroom_gizmos.BestByMinBefore import getCCode
-from classroom_gizmos.import_install import importInstall as II
+### Current rule of thumb: only handies imports from other modules.
+from BestByMinBefore import getCCode
+from import_install import importInstall as II
+from import_install import ckII
 
-def count_down(t):
-    beepy = II( 'beepy')
-    while t:
-        mins, secs = divmod(t, 60)
-        timeformat = '{:02d}:{:02d} '.format(mins, secs)
-        print(timeformat, end='\r')
-        time.sleep(1)
-        t -= 1
-    print('\a\n\nDone!\n\n')
-    if beepy!=None:
-        beepy.beep(1)
 
 def clsall():
     '''Outputs the ASCII clear screen character.
     This usually deletes all the previoous text in the terminal.'''
     print( '\033[2J', end=None)
+
+def is_online():
+    '''Returns True if connected to Internet.'''
+    from urllib.request import urlopen
+    
+    try:
+        urlopen( 'https://www.google.com/', timeout=20)
+        return True
+    except:
+        return False
 
 def is_ipython():
     '''Return True if running in IPython.
@@ -79,17 +79,30 @@ def is_ipython():
         result = True
     return result
 
-def is_interactive():
-    '''Return True if running interactive interpreter but not IPython.
-    Ref: https://stackoverflow.com/questions/23883394/detect-if-python-script-is-run-from-an-ipython-shell-or-run-from-the-command-li
-    '''
-    import inspect
+# def is_interactive():
+#     '''Return True if running interactive interpreter but not IPython.
+#     Ref: https://stackoverflow.com/questions/23883394/detect-if-python-script-is-run-from-an-ipython-shell-or-run-from-the-command-li
+#     '''
+#     import inspect
     
-    if len( inspect.stack()) > 1 and not is_ipython():
-        result = True
-    else:
-        result = False
-    return result
+#     if len( inspect.stack()) > 1 and not is_ipython():
+#         result = True
+#     else:
+#         result = False
+#     return result
+
+def is_interactive():
+    '''Return true if interactive python, False if running from command line.
+    Ref: https://stackoverflow.com/questions/2356399/tell-if-python-is-in-interactive-mode
+    '''
+    import sys
+    try:
+        if sys.ps1: inter = True
+    except AttributeError:
+        inter = False
+        if sys.flags.interactive: inter = True
+    return inter
+
 
 def is_commandline():
     '''Returns True if running from command line (not ipython, and not interactive
@@ -243,10 +256,10 @@ from platform import python_version
 import sys, os.path, time, os
 
 
-def hostname():
-    '''Returns 'fully qualified domain name' '''
-    import socket
-    return socket.getfqdn()
+# def hostname():
+#     '''Returns 'fully qualified domain name' '''
+#     import socket
+#     return socket.getfqdn()
 
 
 def getTS( rel_path):
@@ -279,7 +292,7 @@ def get_version(rel_path):
 
 
 ## define cls and set precision if in IPython.
-if is_ipython():
+if is_ipython() and is_interactive():
     ### set default float precision
     ### Ref: https://stackoverflow.com/questions/10361206/how-to-run-an-ipython-magic-from-a-script-or-timing-a-python-script
     from IPython import get_ipython
@@ -342,7 +355,8 @@ def condaEnvName():
     # return Path(sys.executable).as_posix().split('/')[-3]
     return sys.exec_prefix.split(os.sep)[-1]
 
-def ipython_version():
+def ipythonversion():
+    '''gets IPython version or returns None.'''
     try:
         import IPython
         ipv = IPython.version_info
@@ -353,25 +367,34 @@ def ipython_version():
     except:
         return None
  
-    
-## Get timestamp for package, updated by setup.py.
-timestamp = getTS( 'timestamp.txt') ##
-date  = timestamp[0:10]
-# print('DBug: date: {} TS:\n{}'.format( date, timestamp))
+def in_ipynb():
+    '''True if running in Jupyter notebook.
+    Ref: https://exceptionshub.com/how-can-i-check-if-code-is-executed-in-the-ipython-notebook.html
+    Ref: https://stackoverflow.com/questions/15411967/how-can-i-check-if-code-is-executed-in-the-ipython-notebook.
+    Currently not definitive in result; returns True in Spyder IPython console.'''
+#    try:
+#        cfg = get_ipython().config 
+#        pappname = cfg['IPKernelApp']['parent_appname']
+#        traitlets = ii( 'traitlets')
+#        if (traitlets != None) and ( isinstance( pappname, traitlets.config.loader.LazyConfigValue )):
+#            return True
+##        if pappname == 'ipython-notebook':
+##            return True
+#        else:
+#            return False
+#    except NameError:
+#        return False
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter
 
-__version__=get_version("__init__.py")
-
-if is_interactive() or is_ipython():
-    print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}".format( 
-            __version__, date, python_version(), condaEnvName(), ipython_version())) 
-
-def call( cmd):
-    import subprocess
-    '''Modeled after call function in NANOGrav Sprinng 2020 workshop.
-    call() just executes the command in the shell and displays output.
-    
-    Could have security issues. See subprocess documentation.'''
-    subprocess.call( cmd, shell=True)
 
 def isInstalled( pkgname):
     ''' Imports pkgname and returns package if installed.
@@ -390,6 +413,65 @@ def isInstalled( pkgname):
         return pkg
     except Exception:
     	return None
+ii = isInstalled ## abbreviation
+
+## check if packages for sound are installed and load once
+IPython = ii( 'IPython')
+beepy = ii( 'beepy')
+ # beepy = None  ## testing
+playsoundPkg = ii( 'playsound')
+ # playsoundPkg = None; ## testing
+simpleaudio = ii( 'simpleaudio')
+ # simpleaudio = None ## testing
+
+def beepsound():
+    '''Plays a 'beep' sound when called if a sound package is found, or
+    tries terminal beep.'''
+    ## use beep sounds from various possible packages
+    if beepy != None:
+        beepy.beep( 1)
+    elif playsoundPkg != None and os.path.isfile( 'A-Tone-His_Self-1266414414.wav'):
+        playsoundPkg.playsound( 'A-Tone-His_Self-1266414414.mp3')
+    elif simpleaudio != None and os.path.isfile( 'mixkit-relaxing-bell-chime-3109.wav'):
+        wave_obj = simpleaudio.WaveObject.from_wave_file( 'A-Tone-His_Self-1266414414..wav')
+        play_obj = wave_obj.play()
+        play_obj.wait_done()
+    elif IPython != None:
+        try:
+            # IPython.display.Audio( 'http://www.soundjay.com/button/beep-07.wav', autoplay=True)
+            IPython.display.Audio( 'audio/tone_440.wav', autoplay=True)
+            # import numpy
+            # sr = 22050 # sample rate
+            # T = 2.0    # seconds
+            # t = numpy.linspace(0, T, int(T*sr), endpoint=False) # time variable
+            # x = 0.5*numpy.sin(2*numpy.pi*440*t)  
+            # IPython.display.Audio(x, rate=sr) # load a NumPy array
+        except ValueError:
+            print( '\a')
+    else:
+        print( '\a')   ## probably won't work, but last attempt.
+
+
+    
+## Get timestamp for package, updated by setup.py.
+timestamp = getTS( 'timestamp.txt') ##
+date  = timestamp[0:10]
+# print('DBug: date: {} TS:\n{}'.format( date, timestamp))
+
+__version__=get_version("__init__.py")
+
+# if is_interactive() or is_ipython():
+if is_interactive():
+    print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}; is interactive: {}; is ipython: {}".format( 
+            __version__, date, python_version(), condaEnvName(), ipythonversion(), is_interactive(), is_ipython() ) )
+
+def call( cmd):
+    import subprocess
+    '''Modeled after call function in NANOGrav Sprinng 2020 workshop.
+    call() just executes the command in the shell and displays output.
+    
+    Could have security issues. See subprocess documentation.'''
+    subprocess.call( cmd, shell=True)
 
 
 def mine():
@@ -429,16 +511,20 @@ def mine():
     print('     VURound( value, uncertainty) ➞ Rounds value based on uncertainty.')
     print('     round_sig( value, sigfigs) ➞ Rounds value to specified sig.figs.')
     print('     count_down() ➞ Counts down the specified number of seconds.')
+    print('     beepsound() ➞  trys to make sound.')
 
     print('     randomLetter() ➞ a random uppercase ASCII letter.')
     print('     randomElement( List) ➞ returns random element from list.')
     
+    print('  Functions for portable code:')
+    print('     osname(), username(), computername(), pythonversion(),')
+    print('     condaversion(), ipythonversion(), in_ipynb(), isInstalled() or ii(),  II()' )
+    
     print()
 
-    print('From beepy imports beep()')
     print('From random imports randint( min, max)')
-    print('From classroom_gizmos.BestByMinBefore imports getCCode()')
-    print('From classroom_gizmos.import_install imports import_install as II')
+    print('From BestByMinBefore imports getCCode()')
+    print('From import_install imports import_install as II and imports ckII')
     
     print('From math imports:\n     pi, sqrt, degrees, radians,\n     cos, sin, tan, atan2, asin, acos, atan, and\n' + 
       '     log, log10, exp')
@@ -446,6 +532,7 @@ def mine():
     print( '\n     mine() ➞ lists what handies.py defines.')
 
     print( '\nRequires astropy, PyQt5, and func_timeout packages for full functionality.')
+    print( 'beepsound() can use these audio packages if available: beepy, playsound, simpleaudio')
     
 ##Ref: https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-precision
     # prhints = ('Hint:\n' + 
@@ -623,8 +710,110 @@ def pltsize( w, h=None, dpi=150):
 
 def osname():
     '''Returns name of operating system that Python is running on.'''
-    import os
-    return os.uname().sysname
+    try:
+        os = __import__( 'os')
+        return os.name
+    except ImportError:
+        return None
+
+
+def username():
+    '''Get current username or return "None".'''
+    # import getpass
+    try:
+        getpass = __import__( 'getpass')
+        return( getpass.getuser())
+    except ImportError:
+        return None
+
+def computername():
+    '''Get hostname of current computer or return "None".'''
+    try:
+        socket = __import__( 'socket')
+        return socket.getfqdn()
+    except ImportError:
+        return None
+hostname = computername
+
+def externaladdresses():
+    '''Returns a 3 element list of info about external IP/Hostname.
+      ( external hostname,  list of aliased hostnames, list of aliased IPs)
+      
+    '''
+    from requests import get
+    import socket
+    
+    verbose = False  ## set to True for debugging output
+    
+    ip = 'IP address not found.' ##  To mark failed attempt to get ip address
+    
+    try:
+        ip = get( 'https://checkip.amazonaws.com').text
+        if verbose: 
+            print( f'from amazonaws.com ip is {ip}')
+    except Exception:
+        try:
+            ip = get( 'https://api.ipify.org').text
+            if verbose: 
+                print( f'from ipify.org ip is {ip}')
+        except Exception:
+                ip = get( 'https://ident.me').text
+                if verbose: 
+                    print( f'from ident.me ip is {ip}')
+
+    else:
+        if verbose: 
+            print('\nMy public IP address is: {}\n'.format(ip))
+    
+    ip = ip.rstrip()   ## remove any whitespace at ends of string.
+
+    
+    ##  Ref: https://www.programcreek.com/python/example/2611/socket.gethostbyaddr
+    if verbose: 
+        print( f'DBug ip is {ip}, and its type is {type(ip)}')
+    
+    try:
+        results = socket.gethostbyaddr( ip)
+    except Exception as err:
+        results = ( str( err), [ None], [ ip])
+        
+    return results
+
+def externalIP():
+    '''Returns external IP address via call to externaladdresses().'''
+    return externaladdresses()[2][0]
+
+def pythonversion():
+    '''Get version of python or return "None".'''
+    try:
+        platform = __import__( 'platform')
+        return platform.python_version()
+    except ImportError:
+        return None
+
+def condaversion():
+    '''Get version of conda, or return "None".'''
+    try:
+        conda = __import__( 'conda')
+        return conda.__version__
+    except ImportError:
+        return None  ## to be consistent with the others.
+
+def count_down( t=10):
+    '''Count down by seconds. 't' is the number of seconds.
+    If beepy is installed, then a sound is made when countdown ends.
+    Refs:  
+    https://pypi.org/project/beepy/#description
+    https://www.codespeedy.com/how-to-create-a-countdown-in-python/
+    https://stackoverflow.com/questions/25189554/countdown-clock-0105'''
+    while t:
+        mins, secs = divmod(t, 60)
+        timeformat = '{:02d}:{:02d} '.format(mins, secs)
+        print(timeformat, end='\r')
+        time.sleep(1)
+        t -= 1
+    print('\a\n\nDone!\n\n')
+    beepsound()
 
 try:
     import PyQt5  ## used in fdtest module, skip these definitions if Qt5 not available.
