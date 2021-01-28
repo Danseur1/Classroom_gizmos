@@ -462,7 +462,7 @@ __version__=get_version("__init__.py")
 
 # if is_interactive() or is_ipython():
 if is_interactive():
-    print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}; is interactive: {}; is ipython: {}".format( 
+    print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}; is interactive: {};\n is ipython: {}".format( 
             __version__, date, python_version(), condaEnvName(), ipythonversion(), is_interactive(), is_ipython() ) )
 
 def call( cmd):

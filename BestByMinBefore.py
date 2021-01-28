@@ -12,8 +12,8 @@ from math import sqrt
 ##############################################
 
 ### Default last days for classes:
-duedates = { 'PHYS250.001':'2020-12-17 23:59:00', 'PHYS251': '2020-12-17 23:59:00',
-             'PHYS250.002':'2020-12-17 23:59:00'}
+duedates = { 'PHYS250.001':'2021-05-04 23:59:00', 'PHYS251': '2021-05-04 23:59:00',
+             'PHYS250.002':'2021-05-04 23:59:00'}
 
 ### Added hours to end of full points time for safety margin.
 nudge=1.9   ## h added to be 'safe'
@@ -364,7 +364,7 @@ def getCCode():
     fulldue = ""
     fullsubs = 5
     minsubs = 10
-    tfrac = 0.2
+    tfrac = 0.4
     hours = 12
     
     print( '\nNote: Default values are in square brackets.\n Date format is {}'.format(
@@ -389,7 +389,8 @@ def getCCode():
         if response == "":
             pass
         elif is_datetime( response):
-            due = localTimeToGMTepoch( response) 
+            # due = localTimeToGMTepoch( response) 
+            due = response
         else:
             print( '{} is not in proper Date Time format.'.format( response))
             return

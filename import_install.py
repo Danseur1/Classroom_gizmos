@@ -61,7 +61,8 @@ CondaSpecialCases = {}
 CondaSpecialCases[ 'pymc3'] = 'conda install --use-local --yes -c conda-forge pymc3'
 CondaSpecialCases[ 'ipyvolume'] = 'conda install --use-local --yes -c conda-forge ipyvolume'
 CondaSpecialCases[ 'wordcloud'] = 'conda install --use-local --yes -c conda-forge wordcloud'
-
+CondaSpecialCases[ 'uncertainties'] = 'conda install --use-local --yes -c conda-forge uncertainties'
+CondaSpecialCases[ 'astropy'] = 'conda install --use-local -c anaconda nbconvert astropy'
 
 ## CondaSpecialCases[ 'vpython'] = 'conda install --use-local --yes -c vpython vpython'
 ## in illumidesk, installs with pip but not conda.
