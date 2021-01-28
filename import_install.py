@@ -53,6 +53,8 @@ PipSpecialCases[ 'vpython'] = 'pip install vpython'
 PipSpecialCases[ 'ipyvolume'] = ['pip install ipyvolume', 
                                'jupyter nbextension enable --py --sys-prefix ipyvolume',
                                'jupyter nbextension enable --py --sys-prefix widgetsnbextension']
+PipSpecialCases[ 'matplotlib'] = ['python -m pip install -U pip',
+                                  'python -m pip install -U matplotlib']
 
 # pymc3 may require install of VC runtime:
 #    https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
@@ -63,6 +65,7 @@ CondaSpecialCases[ 'ipyvolume'] = 'conda install --use-local --yes -c conda-forg
 CondaSpecialCases[ 'wordcloud'] = 'conda install --use-local --yes -c conda-forge wordcloud'
 CondaSpecialCases[ 'uncertainties'] = 'conda install --use-local --yes -c conda-forge uncertainties'
 CondaSpecialCases[ 'astropy'] = 'conda install --use-local -c anaconda nbconvert astropy'
+CondaSpecialCases[ 'matplotlib'] = 'conda install --use-local -c conda-forge matplotlib'
 
 ## CondaSpecialCases[ 'vpython'] = 'conda install --use-local --yes -c vpython vpython'
 ## in illumidesk, installs with pip but not conda.
