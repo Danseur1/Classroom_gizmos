@@ -4,7 +4,7 @@
 Created on Fri May 15 15:53:29 2020
 
 @author: cws2
-@Time-stamp: <2020-11-24T18:06:53.308934-05:00 hedfp>
+@Time-stamp: <2021-01-31T09:53:28.399037-05:00 cws2>
 
 
 importInstall - tests import of package and if that fails, tries to install
@@ -33,8 +33,8 @@ Ref: https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-j
 import sys
 import subprocess
 
-import ensurepip  ## use this on systems without pip installed.
-                    ## ensurepip.bootstrap can install pip as local user.
+# import ensurepip  ## use this on systems without pip installed.
+#                     ## ensurepip.bootstrap can install pip as local user.
 
 ## Here add unusual install commands, use list if more than one command line is needed.
 
@@ -64,8 +64,8 @@ CondaSpecialCases[ 'pymc3'] = 'conda install --use-local --yes -c conda-forge py
 CondaSpecialCases[ 'ipyvolume'] = 'conda install --use-local --yes -c conda-forge ipyvolume'
 CondaSpecialCases[ 'wordcloud'] = 'conda install --use-local --yes -c conda-forge wordcloud'
 CondaSpecialCases[ 'uncertainties'] = 'conda install --use-local --yes -c conda-forge uncertainties'
-CondaSpecialCases[ 'astropy'] = 'conda install --use-local -c anaconda nbconvert astropy'
-CondaSpecialCases[ 'matplotlib'] = 'conda install --use-local -c conda-forge matplotlib'
+CondaSpecialCases[ 'astropy'] = 'conda install --use-local --yes -c anaconda nbconvert astropy'
+CondaSpecialCases[ 'matplotlib'] = 'conda install --use-local --yes -c conda-forge matplotlib'
 
 ## CondaSpecialCases[ 'vpython'] = 'conda install --use-local --yes -c vpython vpython'
 ## in illumidesk, installs with pip but not conda.
@@ -364,12 +364,16 @@ II = importInstall             ## alias
 import_install = importInstall ## alias
 
 def ckII( pkgname, importname=None):
-    '''Import/install package and print package version.'''
+    '''Import/install package and print package version.
+    Returns package object returned by importInstall'''
     pkg = II( pkgname, importname)
     if pkg==None:
         print( '{} was not found and could not be installed.'.format( pkgname))
     elif pkg.__name__ == pkgname:
-        print( 'Package {} is installed, version {}.'.format( pkgname, pkg.__version__))
+        try:
+            print( 'Package {} is installed, version {}.'.format( pkgname, pkg.__version__))
+        except Exception:
+            print( f'package {pkgname} is installed, but no version found.')
     return pkg
 
 def pkg_from_path( pkg_name, pkg_path):
@@ -485,4 +489,17 @@ if __name__ == "__main__":
     import numpy as ckpath
     npck = pkg_from_path( 'numpy', ckpath.__file__)
     print( 'numpy version via pkg_from_path: {}'.format( npck.__version__))
+    
+    ckII( 'beepy')
+    ckII( 'numpy')
+    etfqdn()
+    if  computer_name == 'Yoga-New':
+        ckpypulse = pkg_from_path( 'pypulse', r"C:\Users\hedfp\OneDrive - The Pennsylvania State University\Pythonista\PyPulse\pypulse\__init__.py")
+        print( 'For pypulse, pkg_from_path returned type {}'.format( type( ckpypulse)))
+    import numpy as ckpath
+    npck = pkg_from_path( 'numpy', ckpath.__file__)
+    print( 'numpy version via pkg_from_path: {}'.format( npck.__version__))
+    
+    ckII( 'beepy')
+    ckII( 'numpy')
     
