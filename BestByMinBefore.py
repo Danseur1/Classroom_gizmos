@@ -1,7 +1,7 @@
 ''' calc minutes before for BestBuy, In-class, etc. questions
 returns a string that is the perl code fragment for specific cases.xs
 2020-09-25 /CS/ revised wording in getCCode() prompts.'''
-## ----- Time-stamp: <2021-04-21T12:45:31.273526-04:00 cws2> -----
+## ----- Time-stamp: <2021-07-02T17:59:33.885856-04:00 hedfp> -----
 
  
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -491,7 +491,7 @@ if __name__=="__main__":
     # test1 = decCredit( '2020-08-21 23:58:00')
     # assert test1=="&cs9(-&beforeDue('minutes'),-169867,-159787,0.447)*\n&cs9($RESPONSE_NUM,5,10,0.447)*$POINTS</eqn>"
     
-     = '2020-09-01 23:59'
+    decStart = '2020-09-01 23:59'
     print( 'decStart:', decStart)
     
     print( '\ndecCredit:')
