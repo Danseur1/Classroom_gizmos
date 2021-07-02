@@ -2,8 +2,8 @@
 
 '''A collection of functions for ipython use in the classroom
 
-   -------   Time-stamp: <2021-01-28 18:00:45 hedfp>   ------  '''
+   -------   Time-stamp: <2021-01-31 14:10:47 hedfp>   ------  '''
 
 
-__version__ = "0.0b2.dev30" # X.YaN.devM format for now
+__version__ = "0.0b2.dev31" # X.YaN.devM format for now
 

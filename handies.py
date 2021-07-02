@@ -4,7 +4,7 @@ Handy Functions and variables/constants for use at iPython prompt
    call mine() for full list of functions and variables.
 
 Created on Sat Feb  1 15:05:51 2020
-     ------ Time-stamp: <2020-12-11T14:38:28.992678-05:00 hedfp> ------
+     ------ Time-stamp: <2021-07-02T16:53:18.534724-04:00 hedfp> ------
      
 @author: Carl Schmiedekamp
 
@@ -32,11 +32,27 @@ Created on Sat Feb  1 15:05:51 2020
                 running environment.
 2020-10-30 /CS/ adding astropy.constants as c
 2020-11-02 /CS/ added clsall() which clears terminal screen of all characters.
+2021-05-05 /CS/ split round_sig into two function, round_sig_limit rounds to zero
+                  values that are 'very small'. While round_sig( ) rounds to specified
+                  sig.figs.
+2021-05-10 /CS/ added is_defined(), which checks if name is defined.
+
+#####
+
+To Do List:
+    - check all functions are in mine()
+    - use consistant names ex: isIn vs is_in, get_osname vs osname
+    - renamed functions from previous versions get aliases like "ii = isInstalled"
+        for old names.
+    - add function to timestamp current python file
+    - Should the 'mine()' function be renamed to info()?
 
 """
+  ## Hoping for some combatibility in python2.7
+from __future__ import absolute_import, division
+from __future__ import print_function, unicode_literals
 
-
-## Shortcuts etc. functions.
+  ## These includes should be available on most systems
 import math
 import codecs
 from math import pi, sqrt, cos, sin, tan, floor
@@ -44,20 +60,36 @@ from math import acos, asin, atan, atan2, degrees, radians
 from math import log, log10, exp
 
 from random import randint
-import time
 
-### Current rule of thumb: only handies imports from other modules.
+from platform import python_version
+import sys, os.path, time, os
+
+
+import glob, pathlib
+
+from typing import List, Sequence, Any
+
+  ## More for Python 2.7 compatibility
+if sys.version_info[0] < 3:
+    ## load some stuff so that the code can be more compatible with python3
+    def input( str):
+        '''' redefine input() for Python 2 so it is compatible with Python 3 version'''
+        return raw_input( str)  ## raises warning in python3 but not used in python3
+
+
+
+  ### Current rule of thumb: only handies imports from other modules.
 from classroom_gizmos.BestByMinBefore import getCCode
 from classroom_gizmos.import_install import importInstall as II
 from classroom_gizmos.import_install import ckII
 
 
-def clsall():
+def clsall() -> None:
     '''Outputs the ASCII clear screen character.
     This usually deletes all the previoous text in the terminal.'''
     print( '\033[2J', end=None)
 
-def is_online():
+def is_online() -> bool:
     '''Returns True if connected to Internet.'''
     from urllib.request import urlopen
     
@@ -67,7 +99,7 @@ def is_online():
     except:
         return False
 
-def is_ipython():
+def is_ipython() -> bool:
     '''Return True if running in IPython.
     Ref: https://stackoverflow.com/questions/23883394/detect-if-python-script-is-run-from-an-ipython-shell-or-run-from-the-command-li
     '''
@@ -91,20 +123,21 @@ def is_ipython():
 #         result = False
 #     return result
 
-def is_interactive():
+def is_interactive() -> bool:
     '''Return true if interactive python, False if running from command line.
     Ref: https://stackoverflow.com/questions/2356399/tell-if-python-is-in-interactive-mode
     '''
     import sys
     try:
-        if sys.ps1: inter = True
+        if sys.ps1:
+            inter = True
     except AttributeError:
         inter = False
         if sys.flags.interactive: inter = True
     return inter
 
 
-def is_commandline():
+def is_commandline() -> bool:
     '''Returns True if running from command line (not ipython, and not interactive
     interpreter.).
     Ref: https://stackoverflow.com/questions/23883394/detect-if-python-script-is-run-from-an-ipython-shell-or-run-from-the-command-li
@@ -117,14 +150,90 @@ def is_commandline():
         result = False
     return result
 
-def round_sig(x, sig=6, small_value=1.0e-9):
-    ''' Round numbers to sig figs.
+def is_collab() -> bool:
+    '''Returns True if running in Google Colab.
+    Ref: https://stackoverflow.com/questions/53581278/test-if-notebook-is-running-on-google-colab'''
+    import sys
+    return 'google.colab' in sys.modules
+
+def round_sig_limit( x: float, sig: int=6, small_value: float=1.0e-9) -> float:
+    ''' Round numbers to sig figs, and zero if less than min. value.
+      Modified to to work without limit and created new round_sig_limit()
      Ref: https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
      '''
-    return round(x, sig - int(floor(log10(max(abs(x), abs(small_value))))) - 1)
+    if abs( x)<abs(small_value):  ## return zero for smaller values
+        return 0.0
+    else:
+        return round(x, sig - int(floor(log10(abs(x)))) - 1)
+
+def files_globber( wild_card_file_list: List[str], full: bool=True) -> List[ str]:
+    '''
+    
+      expand wild cards in the files in wild_card_file_list
+       and create a single list of path names.
+       
+       if full flag is True, then full paths are returned,
+         otherwise the base names (without directory parts) 
+         of the files are returned.
+       
+       Any duplicate names are removed before returning the list
+         of files found.
+       For example:
+      files_globber( [ './*.txt', '*.txt', ../dir/*.txt'])
+       could specify the same list of files, 3 different ways, 
+       the duplicates are removed and a file name appears
+       once in the output list.  However, different paths to the
+       same file, such as those created with the ln command are
+       all returned.
+    '''
+
+    
+    
+    full_path_list = []      ## list of full path names found
+    filesRel = []   ## wild card expanded file list
+    base_name_list = [] ## list of base file name (file part) corresponding
+                        ##   to paths in files
+                        
+    ## Catch single string instead of a list of strings
+    # print( f'DBug type of arg is { type(wild_card_file_list)}')
+    if type( wild_card_file_list) == str:
+        # print( 'DBug converting string to list.')
+        file_list = [ wild_card_file_list ]
+    else:
+        file_list = wild_card_file_list
+    
+    for f in file_list:
+        # print( f'DBug: current file is {f}')
+        filesRel += glob.glob( f)
+    # print( '\nDBug filesRel: {}'.format( filesRel))
+    
+    for f in filesRel:
+        path = pathlib.Path(f)
+        # print( '\nDBug path: {}, Abs: {}'.format(
+        #     path, path.absolute()))
+        fabs = path.absolute()
+        path = str(fabs)
+        full_path_list.append( path)
+        base =  os.path.basename( path)
+        base_name_list.append( base)
+    print( '\nDBug files: {}'.format( full_path_list))
+    print( f'\nDBug base names: { base_name_list}')
+    if full:
+        return list( set( full_path_list))  ## remove duplicates and return list
+    else:
+        return list( set( base_name_list))  ## remove duplicates and return list
 
 
-def VURound( value, uncertainty, undig=1):
+def round_sig(x: float, sig: int=6):
+    ''' Round numbers to sig figs.
+      Modified to to work without limit and created new round_sig_limit()
+     Ref: https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
+     '''
+    return round(x, sig - int(floor(log10(abs(x)))) - 1)
+
+
+
+def VURound( value: float, uncertainty: float, undig: int=1) -> str:
     '''
     Returns a string with rounded value and uncertainty.
     Round value based on uncertainty.
@@ -207,7 +316,7 @@ def VURound( value, uncertainty, undig=1):
 
 
 
-def randomLetter():
+def randomLetter() -> str:
     '''
     Generate a single random uppercase ASCII letter
 
@@ -220,16 +329,16 @@ def randomLetter():
     import string    
     return random.choice(string.ascii_uppercase)
 
-def randomElement( List=(1,2,3,4,5,6,7, 'oops')):
+def randomElement( List: Sequence[ Any]=(-1,1)) -> Any:
     '''
-    return random element of list
+    return random element of list/sequence
 
     '''
     index = randint(0, len( List)-1)
     return List[ index]
 
 
-def timeStampStr():
+def timeStampStr() -> str:
     '''Returns a string with the current time in ISO format.'''
     import datetime
     import time
@@ -240,46 +349,51 @@ def timeStampStr():
     tz = datetime.timezone(datetime.timedelta(seconds = st_time.tm_gmtoff)) # Create a timezone object with the computed offset in the struct_time.
     return dt.astimezone(tz).isoformat()
 
-# import math
 ## math.comb is in Python 3.8 
 if hasattr( math, "comb" ):
     from math import comb
     from math import comb as nCr
 else:
-    def nCr(n,r):
+    def nCr(n: int, r: int) -> int:
         ''' calculate number of combinations of r from n items.'''
         f = math.factorial
         return f(n) // f(r) // f(n-r)
-    comb = nCr    
+    comb = nCr   
 
-from platform import python_version
-import sys, os.path, time, os
+def relative_to_full_path( rel_path: str) -> str:
+    '''Converts file path, relative to this module's directory, to a full path.
+    Ref: https://stackoverflow.com/questions/3718657/how-do-you-properly-determine-the-current-script-directory
+    '''
+    import inspect
+    filename = inspect.getframeinfo(inspect.currentframe()).filename
+    path = os.path.dirname(os.path.abspath(filename))
+    path = os.path.join( path, rel_path)
+    return path
 
-
-# def hostname():
-#     '''Returns 'fully qualified domain name' '''
-#     import socket
-#     return socket.getfqdn()
-
-
-def getTS( rel_path):
+def getTS( rel_path: str) -> str:
     '''Reads first line of specified file, which is expected to be a time-date
     string.
     This is mostly for internal package use.'''
-    here = os.path.abspath(os.path.dirname(__file__))
-    with codecs.open(os.path.join(here, rel_path), 'r') as tsf:
+    # here = os.path.abspath(os.path.dirname(__file__))
+    # with codecs.open(os.path.join(here, rel_path), 'r') as tsf:
+    fpath = relative_to_full_path( rel_path)
+    # print( f'DBug: rel_path: { rel_path}, fpath: {fpath}')
+    with codecs.open( fpath, 'r') as tsf:
         lines = tsf.read()
     linelist = lines.splitlines()
     return linelist[0]
 
 
-def read(rel_path):
+def read( rel_path: str) -> str:
     '''Reads text file.'''
-    here = os.path.abspath(os.path.dirname(__file__))
-    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+    # here = os.path.abspath(os.path.dirname(__file__))
+    # with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+    fpath = relative_to_full_path( rel_path)
+    # print( f'DBug: fpath: {fpath}')
+    with codecs.open( fpath, 'r') as fp:
         return fp.read()
 
-def get_version(rel_path):
+def get_version(rel_path: str) -> str:
     '''Reads version from specified file. The file path is relative
     to this file. It looks for line that starts with "__version__"'''
     for line in read(rel_path).splitlines():
@@ -289,9 +403,27 @@ def get_version(rel_path):
     else:
         raise RuntimeError("Unable to find version string.")
 
+def is_defined( name:str) -> bool:
+    '''
+    Tests if string in name is a defined variable, function, etc.
+
+    Parameters
+    ----------
+    name : str
+        Name of object.
+
+    Returns
+    -------
+    bool
+        True if contents of name is name of defined object, else False.
+
+    '''
+
+    return name in locals()
 
 
-## define cls and set precision if in IPython.
+
+## define cls magic and set precision if in IPython.
 if is_ipython() and is_interactive():
     ### set default float precision
     ### Ref: https://stackoverflow.com/questions/10361206/how-to-run-an-ipython-magic-from-a-script-or-timing-a-python-script
@@ -303,51 +435,18 @@ if is_ipython() and is_interactive():
             
     ### define clear screen magic (%cls generates 23 blank lines)
     @register_line_magic 
-    def cls(line): 
+    def cls(line) -> None: 
         '''Defines a 'clear screen' line magic'''
         print( 23*'\n') 
         return
 
     del cls ## must delete function to make magic visible.
     
-    # try:
-    #     from IPython.core.magic import register_line_magic
-    #     ## Ref: https://stackoverflow.com/questions/2356399/tell-if-python-is-in-interactive-mode
-    #     ## Ref: https://ipython.readthedocs.io/en/stable/config/custommagics.html
-        
-    #     try:
-    #         if sys.ps1:
-    #             IsInteractive = True
-            
-    #     except AttributeError:
-    #         interpreter = False
-    #         if sys.flags.interactive: IsInteractive = True
-            
-            
-    #     if IsInteractive:
-    #         ### set default float precision
-    #         ### Ref: https://stackoverflow.com/questions/10361206/how-to-run-an-ipython-magic-from-a-script-or-timing-a-python-script
-    #         from IPython import get_ipython
-    #         ipython = get_ipython()
-    #         ipython.magic( 'precision %0.5g')
-            
-    #         ### define clear screen magic (%cls generates 23 blank lines)
-    #         @register_line_magic 
-    #         def cls(line): 
-    #             '''Defines a 'clear screen' line magic'''
-    #             print( 23*'\n') 
-    #             return
-                
-    # except ( ModuleNotFoundError, ImportError):
-    #     IsInteractive = False
-    # else:
-    #     del cls ## must delete function to make magic visible.
-    
     
 
 ######  'Welcome Message' on loading  ######
 
-def condaEnvName():
+def condaEnvName() -> str:
     '''Gets environment name from python's path.
     Ref:
         https://stackoverflow.com/questions/36539623/how-do-i-find-the-name-of-the-conda-environment-in-which-my-code-is-running'''
@@ -355,7 +454,7 @@ def condaEnvName():
     # return Path(sys.executable).as_posix().split('/')[-3]
     return sys.exec_prefix.split(os.sep)[-1]
 
-def ipythonversion():
+def ipythonversion() -> str:
     '''gets IPython version or returns None.'''
     try:
         import IPython
@@ -367,23 +466,12 @@ def ipythonversion():
     except:
         return None
  
-def in_ipynb():
+def in_ipynb() -> bool:
     '''True if running in Jupyter notebook.
     Ref: https://exceptionshub.com/how-can-i-check-if-code-is-executed-in-the-ipython-notebook.html
     Ref: https://stackoverflow.com/questions/15411967/how-can-i-check-if-code-is-executed-in-the-ipython-notebook.
     Currently not definitive in result; returns True in Spyder IPython console.'''
-#    try:
-#        cfg = get_ipython().config 
-#        pappname = cfg['IPKernelApp']['parent_appname']
-#        traitlets = ii( 'traitlets')
-#        if (traitlets != None) and ( isinstance( pappname, traitlets.config.loader.LazyConfigValue )):
-#            return True
-##        if pappname == 'ipython-notebook':
-##            return True
-#        else:
-#            return False
-#    except NameError:
-#        return False
+
     try:
         shell = get_ipython().__class__.__name__
         if shell == 'ZMQInteractiveShell':
@@ -396,10 +484,12 @@ def in_ipynb():
         return False      # Probably standard Python interpreter
 
 
-def isInstalled( pkgname):
-    ''' Imports pkgname and returns package if installed.
+def ck_installed( pkgname: sys.modules) :
+    ''' Checks if package is installed,
+        If installed the package is returned,
+        Else tries to install pkgname and returns package if installed.
         pkgname is a string with name of package as used in import stmt.
-        If not installed, returns None.
+        If install fails, returns None.
         Should be a duplicate of import_install.is_installed().
         Typical Usage:
             astropy = isInstalled( 'astropy') 
@@ -413,7 +503,15 @@ def isInstalled( pkgname):
         return pkg
     except Exception:
     	return None
-ii = isInstalled ## abbreviation
+ii = ck_installed ## alias
+
+def is_installed( pkgname: sys.modules) -> bool:
+    '''Returns True if package is installed.'''
+    try:
+        __import__( pkgname)
+        return True
+    except Exception:
+    	return False
 
 ## check if packages for sound are installed and load once
 IPython = ii( 'IPython')
@@ -424,9 +522,13 @@ playsoundPkg = ii( 'playsound')
 simpleaudio = ii( 'simpleaudio')
  # simpleaudio = None ## testing
 
-def beepsound():
+def beepsound() -> None:
     '''Plays a 'beep' sound when called if a sound package is found, or
-    tries terminal beep.'''
+    tries terminal beep.
+    Sound packages that can be used:
+        beepy
+        simpleaudio
+        Ipython.display.Audio'''
     ## use beep sounds from various possible packages
     if beepy != None:
         beepy.beep( 1)
@@ -454,18 +556,13 @@ def beepsound():
 
     
 ## Get timestamp for package, updated by setup.py.
-timestamp = getTS( 'timestamp.txt') ##
+timestamp = getTS( 'timestamp.txt')
 date  = timestamp[0:10]
-# print('DBug: date: {} TS:\n{}'.format( date, timestamp))
+# print('\nDBug: date: {} TS:\n{}'.format( date, timestamp))
 
 __version__=get_version("__init__.py")
 
-# if is_interactive() or is_ipython():
-if is_interactive():
-    print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}; is interactive: {};\n is ipython: {}".format( 
-            __version__, date, python_version(), condaEnvName(), ipythonversion(), is_interactive(), is_ipython() ) )
-
-def call( cmd):
+def call( cmd: str):
     import subprocess
     '''Modeled after call function in NANOGrav Sprinng 2020 workshop.
     call() just executes the command in the shell and displays output.
@@ -474,20 +571,22 @@ def call( cmd):
     subprocess.call( cmd, shell=True)
 
 
-def mine():
+def mine() -> None:
 
-    '''List the functions and variables defined in handies.py'''
+    '''List (prints) the functions and variables defined in handies.py'''
+    
     print('\n classroom_gizmos.handies ver: {}, modified {}'.format(
         __version__, date))
-    if isInstalled( 'astropy'):
+    if is_installed( 'astropy'):
         print('Defining:\n     nowMJD(); mjd2date(), date2mjd(),')
         print('     astropy.units as "u", i.e. u.cm or u.GHz')
         print('     astropy.constants as "c", i.e. c.c or c.au')
+        print('     angular_separation() ➞ angular separation between two RA,DEC coords.')
     else:
         print( '** astropy not available; MJD functions, u (units) and c (constants) are not available.')
     print('     cdbn(), osname(), hostname(), call(),')
-    if isInstalled( 'PyQt5'):
-        if isInstalled( 'func_timeout'):
+    if is_installed( 'PyQt5'):
+        if is_installed( 'func_timeout'):
             print('     select_file(), select_file_timeout( timeout={}),'.format( sfTimeOut))
         else:
             print('** func_timeout not available; select_file_timeout() ignores timeout.')
@@ -504,21 +603,29 @@ def mine():
     print('     clsall() function which removes previous text on screen by outputing ascii code.')
     print('     pltsize( width) ➞ resizes plots in matplotlib, units are inches')
     print('     timeStampStr() ➞ returns a readable timestamp string.')
-    print('     isInstalled( pkgNameStr) ➞ returns package or None if not installed.')
+    print('     ck_installed( pkgNameStr) ➞ returns package or None if not installed.')
+    print('     is_installed( pkgNameStr) ➞ returns True if package is installed.')
     print('     is_ipython() ➞ True if running in ipython.')
     print('     is_interactive() ➞ True if in interactive interpreter but not in ipython.')
     print('     is_commandline() ➞ True if running from commandline;not interactive nor ipython.')
+    print('     is_colab() ➞ True if running from Google Colab.')
     print('     VURound( value, uncertainty) ➞ Rounds value based on uncertainty.')
     print('     round_sig( value, sigfigs) ➞ Rounds value to specified sig.figs.')
+    print('     round_sig_limit( value, sigfigs, limit) ➞ Rounds value to specified sig.figs or zero.')
     print('     count_down() ➞ Counts down the specified number of seconds.')
     print('     beepsound() ➞  trys to make sound.')
 
     print('     randomLetter() ➞ a random uppercase ASCII letter.')
     print('     randomElement( List) ➞ returns random element from list.')
     
+    print('     external_addresses()  ➞  external names and IPs')
+    print('     externalIP() ➞ external IP')
+    print('     local_addresses() ➞ local name and IP')
+    
     print('  Functions for portable code:')
     print('     osname(), username(), computername(), pythonversion(),')
-    print('     condaversion(), ipythonversion(), in_ipynb(), isInstalled() or ii(),  II()' )
+    print('     condaversion(), ipythonversion(), in_ipynb(), is_installed()')
+    print('     ck_installed(), or ii(),  II()' )
     
     print()
 
@@ -540,44 +647,44 @@ def mine():
     # print(prhints)
 
 
-def cosD( ang):
+def cosD( ang: float) -> float:
     '''Return cosine of angle in degrees.'''
     import math as m
     return m.cos( m.radians( ang))
 
-def sinD( ang):
+def sinD( ang: float) -> float:
     '''Return sine of angle in degrees.'''
     import math as m
     return m.sin( m.radians( ang))
 
-def tanD( ang):
+def tanD( ang: float) -> float:
     '''Return tangent of angle in degrees.'''
     import math as m
     return m.tan( m.radians( ang))
 
-def asinD( val):
+def asinD( val: float) -> float:
     '''Return inverse sine, in degrees, of val.'''
     import math as m
     return  m.degrees( m.asin( val))
 
-def acosD( val):
+def acosD( val: float) -> float:
     '''Return inverse consine, in degrees, of val.'''
     import math as m
     return m.degrees( m.acos( val))
 
 
-def atanD( val):
+def atanD( val: float) -> float:
     '''Return inverse tangent, in degrees, of val.'''
     import math as m
     return m.degrees( m.atan( val))
 
 
-def atan2D( y, x):
+def atan2D( y: float, x: float) -> float:
     '''Return inverse tangent, in degrees, of y/x. (-180 ... 180)'''
     import math as m
     return m.degrees( m.atan2( y, x))
 
-def atan2P( y, x):
+def atan2P( y: float, x: float) -> float:
     '''Return inverse tangent, in degrees, of y/x. (0 .. 360)'''
     ang = atan2D( y, x)
     if ang <0:
@@ -589,10 +696,10 @@ deg = degrees
 
 greeks = ' Α Β Γ Δ Ε Ζ Η Θ Ι Κ Λ Μ Ν Ξ Ο Π Ρ Σ Τ Υ Φ Χ Ψ Ω  α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω '
 
-def cdbn( dirname, sub=None):
+def cdbn( dirname: str, sub=None) -> str:
     '''cd to directory (or subdirectory) who's path is in Env.Var. who's name is passed as
        first argument.  2nd argument specifies a subdirectory relative to
-       that named directory.'''
+       that named directory. On successful change, returns path of new CWD.'''
     import os
     """ Does cd to directory named in specified environment
         variable.
@@ -626,34 +733,26 @@ def cdbn( dirname, sub=None):
             return False
 
 
-# def cdpy1d():
-#     '''cd to Pythonista dir. in OneDrive'''
-#     return cdbn('MYonedrivepsu', 'Pythonista')
-#
-# def cdWD():
-#     '''cd to SinglePulse/WorkingDir.'''
-# # #     ##os.chdir( r'C:\Users\hedfp\OneDrive - The Pennsylvania State University\InProgress\ACURA-Radio-Astro-class-stuff\SinglePulse-GiantPulses\WorkingDir')
-#     return cdbn('MYonedrivepsu', 'InProgress\ACURA-Radio-Astro-class-stuff\SinglePulse-GiantPulses\WorkingDir' )
-#
 
-try:
+try:   ## These are only defined if astropy is installed.
     import astropy
     from astropy import units as u
     from astropy import constants as c
+    import astropy.coordinates.angles as aca
     
-    def nowMJD():
+    def nowMJD() -> float:
         '''Convert current time to MJD'''
         from astropy.time import Time
         return Time.now().to_value( 'mjd')
     
-    def mjd2date( mjd):
-        '''Convert MJD to a civil date/time'''
+    def mjd2date( mjd: float) -> str:
+        '''Convert MJD to a civil utc date/time'''
         
         from astropy.time import Time
         time = Time( mjd, format='mjd')
         return time.to_datetime()
     
-    def date2mjd_( civildate):
+    def date2mjd_( civildate: str) -> float:
         '''Convert specified time to MJD.
         The string in civildate must be recognized by astropy.time.Time,
         and is assumed to be UCT time.
@@ -666,7 +765,7 @@ try:
         from astropy.time import Time
         return Time( civildate).to_value( 'mjd', 'long')
         
-    def date2mjd( civildate):
+    def date2mjd( civildate: str) -> float:
         '''Convert specified time to MJD.
         The string in civildate must be recognized by astropy.time.Time,
         and is assumed to be UCT time.
@@ -694,11 +793,43 @@ try:
         
         from astropy.time import Time
         return Time( cd).to_value( 'mjd', 'long')+offset
+    
+    def angular_separation( RA1: str, DEC1: str, RA2: str, DEC2: str
+                           ) -> aca.Angle:
+        '''
+        Returns angle separation between two coordinates in Astropy 'Angle' units.
+    
+        Parameters
+        ----------
+        RA1 : string
+            RA coordinate (ex: '5h23m34.5s')
+        DEC1 : string
+            DEC coordinate (ex: '-69d45m22s')
+        RA2 : string
+            RA coordinate (ex: '0h52m44.8s')
+        DEC2 : string
+           DEC coordinate (ex: '-72d49m43s')
+    
+        Returns
+        -------
+        Separation angle in Astropy Angle units.
+    
+        '''
+        
+        from astropy.coordinates import SkyCoord
+        # c1 = SkyCoord('5h23m34.5s', '-69d45m22s', frame='icrs')
+        # c2 = SkyCoord('0h52m44.8s', '-72d49m43s', frame='fk5')
+        c1 = SkyCoord( RA1, DEC1)
+        c2 = SkyCoord( RA2, DEC2)
+        sep = c1.separation(c2)
+        
+        return sep
+    
 except ImportError:
-    print( 'mjd functions not defined because astropy is not available.')
+    print( 'mjd and anglular_separation functions not defined because astropy is not available.')
 
 
-def pltsize( w, h=None, dpi=150):
+def pltsize( w: float, h: float=None, dpi: int=150) -> None:
     '''set plot size (matplotlib), size in notebook depends on resolution and
     browser settings. However, doubling the values should double the size.
     dpi is dots-per-inch which also changes plot size in notebooks.
@@ -708,7 +839,7 @@ def pltsize( w, h=None, dpi=150):
         h = 0.75*w
     matplotlib.rc('figure', figsize=[w,h], dpi=dpi)
 
-def osname():
+def osname() -> str:
     '''Returns name of operating system that Python is running on.'''
     try:
         os = __import__( 'os')
@@ -717,7 +848,7 @@ def osname():
         return None
 
 
-def username():
+def username() -> str:
     '''Get current username or return "None".'''
     # import getpass
     try:
@@ -726,7 +857,7 @@ def username():
     except ImportError:
         return None
 
-def computername():
+def computername() -> str:
     '''Get hostname of current computer or return "None".'''
     try:
         socket = __import__( 'socket')
@@ -735,7 +866,7 @@ def computername():
         return None
 hostname = computername
 
-def externaladdresses():
+def external_addresses() -> List[ str]:
     '''Returns a 3 element list of info about external IP/Hostname.
       ( external hostname,  list of aliased hostnames, list of aliased IPs)
       
@@ -779,11 +910,18 @@ def externaladdresses():
         
     return results
 
-def externalIP():
-    '''Returns external IP address via call to externaladdresses().'''
-    return externaladdresses()[2][0]
+def local_addresses() -> List[str]:
+    ''' returns tuple of local hostname and local IP address'''
+    import socket
+    hostname = socket.gethostname()
+    IP = socket.gethostbyname(hostname)
+    return ( hostname, IP)
 
-def pythonversion():
+def externalIP() -> str:
+    '''Returns external IP address via call to external_addresses().'''
+    return external_addresses()[2][0]
+
+def pythonversion() -> str:
     '''Get version of python or return "None".'''
     try:
         platform = __import__( 'platform')
@@ -792,22 +930,23 @@ def pythonversion():
         return None
 
 def condaversion():
-    '''Get version of conda, or return "None".'''
+    '''Get version of conda, or return "None".
+    Usually returns None!'''
     try:
         conda = __import__( 'conda')
         return conda.__version__
     except ImportError:
         return None  ## to be consistent with the others.
 
-def count_down( t=10):
+def count_down( t: int=10) -> None:
     '''Count down by seconds. 't' is the number of seconds.
     If beepy is installed, then a sound is made when countdown ends.
     Refs:  
     https://pypi.org/project/beepy/#description
     https://www.codespeedy.com/how-to-create-a-countdown-in-python/
     https://stackoverflow.com/questions/25189554/countdown-clock-0105'''
-    while t:
-        mins, secs = divmod(t, 60)
+    while t > 0:
+        mins, secs = divmod( int( t), 60)
         timeformat = '{:02d}:{:02d} '.format(mins, secs)
         print(timeformat, end='\r')
         time.sleep(1)
@@ -815,20 +954,94 @@ def count_down( t=10):
     print('\a\n\nDone!\n\n')
     beepsound()
 
+
+
+#>>> File hash code functions 
+def base10toN( num: int, n: int) -> str:
+    """Change 'num'  to a base-n number.
+    Up to base-38 is supported without special notation.
+    should be file name safe.
+    
+     0 <= num  (i.i. non-negative)
+     2 <= n <= 38  implemented number bases
+    invalid values result in '???' being returned.
+    
+    C.S.:extended from base 36 to 38
+    
+    Ref: https://code.activestate.com/recipes/65212-convert-from-decimal-to-any-base-number/
+    """
+    if num < 0:
+        return '???'
+    if n < 2 or n > 38:
+        return '???'
+        
+    num_rep={10:'a', 11:'b', 12:'c', 13:'d', 14:'e', 15:'f',
+                     16:'g', 17:'h', 18:'i', 19:'j', 20:'k',
+                     21:'l', 22:'m', 23:'n', 24:'o', 25:'p',
+                     26:'q', 27:'r', 28:'s', 29:'t', 30:'u',
+                     31:'v', 32:'w', 33:'x', 34:'y', 35:'z',
+                     36:'-', 37:'_'}
+    alphalen = 38  ##  number of characters in alphabet
+    new_num_string=''
+    current=num
+    while current!=0:
+        remainder=current%n
+        if alphalen > remainder > 9:  ## 10 to alphalen - 1 case
+            remainder_string=num_rep[remainder]
+        elif remainder>=alphalen:     ## error condition
+            remainder_string='('+str(remainder)+')'
+        else:                         ## 0 to 9 case
+            remainder_string=str(remainder)
+        new_num_string=remainder_string+new_num_string
+        current=int(current/n)
+    return new_num_string
+
+def hashstrlist( strlist: List[ str], nc: int=5, ordered: bool=False) -> str:
+    '''
+    Creates file systems safe hash code of length nc from the list of
+    strings in strlist. Typically, strlist is a list of file names.
+    The order of the strings does not affect the hash generated unless ordered is True.
+    
+    uses base10toN
+    2019-02-16 /CS/ initial function version
+    2021-05-09 /CS/ added 'ordered' flag.
+    '''
+    import hashlib
+    tmplist = strlist.copy()
+    if not ordered:
+        tmplist.sort()
+#    print( 'DBug:\n', strlist,'\n-----\n', tmplist)
+    tmp = "".join( tmplist)
+#    print( 'DBug:\n', tmp)
+    resulthash = int(hashlib.sha256(tmp.encode('utf-8')).hexdigest(), 16) 
+    # print( 'DBug resulthash:', resulthash)
+    result = resulthash % 38**(nc)
+    # print( 'DBug: result:', result)
+    result = base10toN( result, 38).upper()
+    # print( 'DBug: result:', result)
+    
+    ## zero fill if length is less than nc
+    while len( result) < nc:
+        result = '0' + result
+    return result
+
+#>>> END File hash code functions        
+
+
 try:
     import PyQt5  ## used in fdtest module, skip these definitions if Qt5 not available.
     
     ## default timeout (in s) for select_file():
     sfTimeOut = 95
 
-    def select_file( ):
+    def select_file( ) -> str:
         ''' Uses fdtest.py to browse for file and return its path.
         WARNING: This function will 'hang' until a file is selected.'''
         
         from classroom_gizmos.fdtest import gui_fname        
         return gui_fname()
 
-    def select_file_timeout( timeout=sfTimeOut):
+    def select_file_timeout( timeout: float=sfTimeOut):
         ''' Uses fdtest.py to browse for file and return its path.
         If the fdtest call takes longer than 'timeout' seconds,
         the attempt is cancelled and None is returned.
@@ -862,6 +1075,12 @@ try:
         return filename
 except ImportError:
     print( 'select_file functions not defined because PyQt5 is not available.')
+
+user = username()  ## only output version info for me.
+if ( user == 'cws2' or user == 'hedfp') and +\
+    is_interactive() and not in_ipynb():
+    print( "Loading Carl's handies.py ver: {} {}; Python:{};\n   environment: {}; IPython: {}; is interactive: {};\n is ipython: {}".format( 
+            __version__, date, python_version(), condaEnvName(), ipythonversion(), is_interactive(), is_ipython() ) )
 
 
 

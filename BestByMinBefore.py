@@ -1,7 +1,7 @@
 ''' calc minutes before for BestBuy, In-class, etc. questions
 returns a string that is the perl code fragment for specific cases.xs
 2020-09-25 /CS/ revised wording in getCCode() prompts.'''
-## ----- Time-stamp: <2020-09-18T08:36:44.441669-04:00 hedfp> -----
+## ----- Time-stamp: <2021-04-21T12:45:31.273526-04:00 cws2> -----
 
  
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -214,9 +214,9 @@ def decCredit( decStart, hoursToMinimum=BBP_hours, fullCreditSubs=5, minCreditSu
                decStart, hoursToMinimum, hoursToMinimum/24))
         print( 'Decreasing credit starts ',
               minBeforeToLocal( decMinutes, assignmentDue))
-        print( 'Decreasing credit ends {}, to {}% credit, {}% dec. with subs.'.format(
+        print( 'Decreasing credit ends {}, to {}% credit, {}% dec. with time, {}% with subs.'.format(
               minBeforeToLocal( endMinutes, assignmentDue),
-              timeMult*100, subsMult*100))
+              minCreditFraction*100, timeMult*100, subsMult*100))
         
         ## add '*' if there is a submissions decrease part or finish line.
         if fullCreditSubs>0:
@@ -394,7 +394,7 @@ def getCCode():
         else:
             print( '{} is not in proper Date Time format.'.format( response))
             return
-        print( 'DBug due: {}'.format( due))
+        print( 'Due: {}'.format( due))
     
         
     
@@ -438,7 +438,7 @@ def getCCode():
     if fulldue != "":  ## credit decreases with time, need to know how fast.
         prompt = 'Enter number days for credit to decrease to minumum [{:.2f}]:'    
         response = input( prompt.format( hours/24)).strip()
-        print('DBug response: {}'.format( response))
+        # print('DBug response: {}'.format( response))
         if response == "":
             pass
         elif not is_number( response):
@@ -460,8 +460,8 @@ def getCCode():
                 return
  
 
-    print( 'DBug: fulldue "{}", due {}, fullsubs {}, minsubs {}, tfrac {}, hours {}'.format(
-        fulldue, due, fullsubs, minsubs, tfrac, hours))
+    # print( 'DBug: fulldue "{}", due {}, fullsubs {}, minsubs {}, tfrac {}, hours {}'.format(
+    #     fulldue, due, fullsubs, minsubs, tfrac, hours))
     
     print( '_____________  Perl Code Below ++++++++++++++')
     
@@ -472,6 +472,26 @@ if __name__=="__main__":
     print( '\nTesting BestByMinBefore.py\n')
     
     decStart = '2020-09-01 23:59'
+    print( 'decStart:', decStart)
+    
+    print( '\ndecCredit:')
+    decCredit( decStart)
+    
+    print( '\nHW:')
+    HWdecCredit()
+    
+    print( '\nInCdecCredit:')
+    InCdecCredit( decStart)
+    
+    print( '\nBBPdecCredit:')
+    BBPdecCredit( decStart)
+    
+    
+    
+    # test1 = decCredit( '2020-08-21 23:58:00')
+    # assert test1=="&cs9(-&beforeDue('minutes'),-169867,-159787,0.447)*\n&cs9($RESPONSE_NUM,5,10,0.447)*$POINTS</eqn>"
+    
+     = '2020-09-01 23:59'
     print( 'decStart:', decStart)
     
     print( '\ndecCredit:')

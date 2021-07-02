@@ -4,7 +4,7 @@
 Created on Fri May 15 15:53:29 2020
 
 @author: cws2
-@Time-stamp: <2021-01-31T09:53:28.399037-05:00 cws2>
+@Time-stamp: <2021-05-12T08:09:55.461840-04:00 cws2>
 
 
 importInstall - tests import of package and if that fails, tries to install
@@ -33,6 +33,9 @@ Ref: https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-j
 import sys
 import subprocess
 
+if sys.version_info[0] < 3:
+    raise Exception("Please upgrade to Python 3")
+    
 # import ensurepip  ## use this on systems without pip installed.
 #                     ## ensurepip.bootstrap can install pip as local user.
 
@@ -55,6 +58,8 @@ PipSpecialCases[ 'ipyvolume'] = ['pip install ipyvolume',
                                'jupyter nbextension enable --py --sys-prefix widgetsnbextension']
 PipSpecialCases[ 'matplotlib'] = ['python -m pip install -U pip',
                                   'python -m pip install -U matplotlib']
+# pygedm is python 2.7
+# PipSpecialCases[ 'pygedm'] = [ 'pip install --user git+https://github.com/telegraphic/pygedm']
 
 # pymc3 may require install of VC runtime:
 #    https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
@@ -66,6 +71,7 @@ CondaSpecialCases[ 'wordcloud'] = 'conda install --use-local --yes -c conda-forg
 CondaSpecialCases[ 'uncertainties'] = 'conda install --use-local --yes -c conda-forge uncertainties'
 CondaSpecialCases[ 'astropy'] = 'conda install --use-local --yes -c anaconda nbconvert astropy'
 CondaSpecialCases[ 'matplotlib'] = 'conda install --use-local --yes -c conda-forge matplotlib'
+CondaSpecialCases[ 'lmfit'] = 'conda install --use-local --yes -c GSECARS lmfit'
 
 ## CondaSpecialCases[ 'vpython'] = 'conda install --use-local --yes -c vpython vpython'
 ## in illumidesk, installs with pip but not conda.
